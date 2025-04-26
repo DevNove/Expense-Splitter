@@ -61,6 +61,13 @@
             flex: 1;
             font-size: 1.5rem;
             text-align: center;
+            /* Add transition for smooth size changes */
+            transition: font-size 0.2s ease-in-out;
+            /* Ensure text stays on one line with ellipsis if needed MOD Not workikng
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;*/
+            max-width: 95%;
         }
 
         .language-selector {
@@ -243,13 +250,21 @@
 
         .expense-details {
             flex: 1;
+            overflow: hidden;
+            max-width: 100%;
         }
 
         .expense-title {
             font-weight: 640;
             font-size: 1.2rem;
             margin-bottom: 0.25rem;
-            
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            text-overflow: ellipsis;
+            word-break: break-word;
         }
 
         .expense-meta {
@@ -816,6 +831,9 @@
         .group-card h3 {
             color: var(--primary-dark);
             margin-bottom: 0.5rem;
+            white-space: nowrap; /*MOD*/
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .group-card p {
@@ -829,6 +847,7 @@
             font-size: 0.9rem; /*MOD*/
             font-weight: 500;
             margin-right: 0.5rem;
+            margin: 0.165rem 0; /*MOD*/
         }
 
         .badge-primary {
@@ -2957,6 +2976,9 @@
                 groupElement.addEventListener('click', () => openGroup(group.id));
                 groupsList.appendChild(groupElement);
             });
+            
+            
+            adjustFontSize(); //BBMOD
         }
 
         // Create a new group
@@ -3029,6 +3051,7 @@
             currencySymbolSpan.textContent = currencySymbols[group.currency] || '$';
             editCurrencySymbolSpan.textContent = currencySymbols[group.currency] || '$';
             
+            adjustFontSize(); //BBMOD
             renderParticipants();
             renderExpenses();
             renderBalances();
@@ -3894,6 +3917,8 @@
             renderParticipants();
             renderExpenses();
             renderBalances();
+
+            adjustFontSize(); // Adjust font size for group detail screen BBMOD
         }
 
         // Check for shared group in URL when app loads
@@ -3958,6 +3983,63 @@
                 console.error('Error parsing shared group data:', error);
                 showToast(translations[currentLanguage].invalid_qr_data, 'error');
             }
+        }
+
+
+        function adjustFontSize() { /*MOD could be improved*/
+            // Get the header title element
+            const headerTitle = document.querySelector('.header-title h1');
+            const titleLength = headerTitle.textContent.length;
+            const headerContainer = document.querySelector('.header-title');
+            
+            // Set font size parameters
+            const maxFontSize = 2.4; // Maximum font size in rem
+            const minFontSize = 1.0; // Minimum font size in rem
+            const baseCharacters = 17; // Font starts decreasing after this many characters
+            const maxHeaderHeight = 60; // Maximum height we want for the header in pixels
+            const lineHeight = 1.5; // Consistent line height
+            
+            // Initial font size calculation based on title length
+            let fontSize;
+            if (titleLength <= baseCharacters) {
+                fontSize = maxFontSize;
+            } else {
+                const ratio = Math.pow(baseCharacters / titleLength, 0.9);
+                fontSize = Math.max(minFontSize, maxFontSize * ratio);
+            }
+            
+            // Apply initial font size and set consistent line height
+            headerTitle.style.fontSize = `${fontSize.toFixed(2)}rem`;
+            headerTitle.style.lineHeight = `${lineHeight}`;
+            
+            // Check if header height exceeds our maximum desired height
+            let currentHeight = headerTitle.offsetHeight;
+            let iterations = 0;
+            const maxIterations = 10; // Prevent infinite loops
+            
+            // If the header is too tall, gradually reduce font size until it fits
+            while (currentHeight > maxHeaderHeight && iterations < maxIterations && fontSize > minFontSize) {
+                // Reduce font size in smaller increments for finer control
+                fontSize -= 0.1;
+                headerTitle.style.fontSize = `${fontSize.toFixed(2)}rem`;
+                currentHeight = headerTitle.offsetHeight;
+                iterations++;
+            }
+            
+            // Set a fixed height for the header container to ensure consistency
+            headerContainer.style.height = `${maxHeaderHeight}px`;
+            headerContainer.style.display = 'flex';
+            headerContainer.style.alignItems = 'center';
+            headerContainer.style.justifyContent = 'center';
+            
+            // Ensure text doesn't overflow the container
+            headerTitle.style.overflow = 'hidden';
+            headerTitle.style.textOverflow = 'ellipsis';
+            headerTitle.style.display = '-webkit-box';
+            headerTitle.style.webkitLineClamp = '2'; // Limit to max 2 lines
+            headerTitle.style.webkitBoxOrient = 'vertical';
+            
+            console.log(`Title length: ${titleLength}, Font size: ${fontSize.toFixed(2)}rem, Height: ${currentHeight}px`);
         }
 
         // Initialize the app when the page loads
