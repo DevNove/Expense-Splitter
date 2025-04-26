@@ -1,0 +1,3906 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Favicon for the tab calc-->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><circle cx='256' cy='256' r='240' fill='%234CAF50' stroke='%23388e3c' stroke-width='32'/><rect x='136' y='136' width='240' height='240' rx='16' fill='%23e8f5e9'/><rect x='160' y='160' width='192' height='48' fill='%23388e3c'/><rect x='160' y='224' width='48' height='48' fill='%23388e3c'/><rect x='224' y='224' width='48' height='48' fill='%23388e3c'/><rect x='288' y='224' width='48' height='48' fill='%23388e3c'/><rect x='160' y='288' width='48' height='48' fill='%23388e3c'/><rect x='224' y='288' width='48' height='48' fill='%23388e3c'/><rect x='288' y='288' width='48' height='96' fill='%23388e3c'/><rect x='160' y='352' width='112' height='32' fill='%23388e3c'/></svg>"> 
+    <!-- MOD Scripts for QR and data compresion -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Splitter</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-light: #e8f5e9;
+            --primary-dark: #388e3c;
+            --secondary-color: #f44336;
+            --secondary-light: #ffebee;
+            --background-color: #f5f5f5;
+            --card-color: #ffffff;
+            --text-color: #333333;
+            --text-secondary: #757575;
+            --border-color: #e0e0e0;
+            --success-color: #4CAF50;
+            --warning-color: #FFC107;
+            --danger-color: #F44336;
+            --border-radius: 8px;
+            --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding-bottom: 70px;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1.25rem;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--box-shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            flex: 1;
+            font-size: 1.5rem; /*MOD*/
+            text-align: center;
+        }
+
+        .language-selector {
+            position: absolute;
+            right: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .language-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            transition: var(--transition);
+        }
+
+        .language-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .language-btn.active {
+            background-color: rgba(255, 255, 255, 0.3);
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .card h2 {
+            margin-bottom: 1.25rem;
+            color: var(--primary-dark);
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 0.5rem;
+            font-size: 1.8rem;
+            font-weight: 650; /*MOD*/
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: var(--border-radius);
+            color: white;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            padding: 0.75rem 1.25rem;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background-color: #757575;
+        }
+
+        .btn-secondary:hover {
+            background-color: #616161;
+        }
+
+        .btn-danger {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #d32f2f;
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-block {
+            display: block;
+            width: 100%;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        input, select, textarea {
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            padding: 0.75rem;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .input-group input {
+            flex: 1;
+        }
+
+        .expense-list {
+            list-style: none;
+        }
+
+        .expense-date-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .expense-date-header {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 0.75rem;
+            font-weight: 680;
+            font-size: 1.3rem;
+        }
+
+        .expense-item {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+            border-radius: var(--border-radius);
+        }
+
+        .expense-item:hover {
+            background-color: #f9f9f9;
+        }
+
+        .expense-item:last-child {
+            border-bottom: none;
+        }
+
+        .expense-details {
+            flex: 1;
+        }
+
+        .expense-title {
+            font-weight: 640;
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+            
+        }
+
+        .expense-meta {
+            display: flex;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .expense-payer {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-weight: 500;
+            color: var(--primary-dark);
+            background-color: var(--primary-light);
+            padding: 0.25rem 0.5rem;
+            border-radius: 50px;
+        }
+
+        .expense-amount {
+            font-weight: bold;
+            font-size: 1.1rem;
+            white-space: nowrap;
+        }
+
+        .expense-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 1rem;
+        }
+
+        .expense-action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /*MOD*/
+            font-size: 1.25rem;
+        }
+
+        .expense-action-btn.edit-expense {
+            color: #2196F3;
+        }
+
+        .expense-action-btn.edit-expense:hover {
+            background-color: rgba(33, 150, 243, 0.1);
+        }
+
+        .expense-action-btn.delete-expense {
+            color: var(--danger-color);
+        }
+
+        .expense-action-btn.delete-expense:hover {
+            background-color: rgba(244, 67, 54, 0.1);
+        }
+
+        .positive {
+            color: var(--success-color);
+        }
+
+        .negative {
+            color: var(--danger-color);
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            gap: 0.5rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .tab:hover {
+            color: var(--primary-color);
+        }
+
+        .tab.active {
+            border-bottom: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .balance-item {
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .balance-item:last-child {
+            border-bottom: none;
+        }
+
+        .balance-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;  /*AAMOD*/
+            font-weight: 500;
+            align-items: center;
+        }
+
+        .balance-bar-container {
+            height: 10px;
+            background-color: #f0f0f0;
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .balance-bar {
+            height: 100%;
+            position: absolute;
+            top: 0;
+            transition: width 0.5s ease;
+        }
+
+        .balance-bar.positive {
+            background-color: var(--success-color);
+            left: 50%;
+            border-radius: 0 20px 20px 0;
+        }
+
+        .balance-bar.negative {
+            background-color: var(--danger-color);
+            right: 50%;
+            border-radius: 20px 0 0 20px;
+        }
+
+        .balance-center-marker {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            height: 100%;
+            width: 2px;
+            background-color: rgba(0,0,0,0.1);
+            z-index: 1;
+        }
+
+        .balance-amount {
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.95rem;
+        }
+
+        .balance-amount.positive {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: var(--success-color);
+        }
+
+        .balance-amount.negative {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: var(--danger-color);
+        }
+
+        .settlement-item {
+            padding: 0.75rem 1rem;
+            font-size: 1.1rem; /*AAMOD*/
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--primary-light);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+        }
+
+        .settlement-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 0.75rem;
+            box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item {
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .nav-item i {
+            font-size: 1.5rem;
+            display: block;
+        }
+
+        .group-selector { /*MOD*/
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .group-actions { /*MOD*/
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        #share-group-btn { /*MOD*/
+            background-color: #4a6fa5; /* A nice blue color that stands out but isn't too aggressive */
+            color: white;
+        }
+
+        #share-group-btn:hover { /*MOD*/
+            background-color: #3a5a80;
+        }
+
+        /* MOD ADD ALL Share URL */
+        .share-url-container { 
+            margin-top: 1.5rem;
+            width: 100%;
+        }
+
+        .copy-url-input-group {
+            display: flex;
+            margin: 0.5rem 0;
+        }
+
+        #share-url-input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius) 0 0 var(--border-radius);
+            font-size: 0.9rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #copy-url-btn {
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+        }
+
+        #copy-url-btn:hover {
+            background-color: var(--primary-dark);
+        }
+
+        #qr-canvas { /*MOD*/
+            width: 350px;
+            height: 350px;
+            /*Fill total*/
+            margin: 0 auto;
+        }
+
+         /* MOD ^ */
+
+        .modal { /*MOD all modal more consistent*/
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .close { /*MOD*/
+            cursor: pointer;
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: white;
+            transition: var(--transition);
+        }
+
+        .close:hover {
+            color: var(--danger-color);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+            max-height: calc(90vh - 140px);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            padding: 1.25rem;
+            border-top: 1px solid var(--border-color);
+            position: sticky;
+            bottom: 0;
+            background: white;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+        }
+
+        .participant-list {
+            list-style: none;
+            margin-bottom: 1.25rem;
+        }
+
+        .participant-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            /*INcrease size and width of font AAMOD*/ 
+            font-size: 1.1rem;
+            font-weight: 500;
+            border-bottom: 1px solid var(--border-color);
+            transition: var(--transition);
+        }
+
+        .participant-item:hover {
+            background-color: var(--primary-light);
+            border-radius: var(--border-radius);
+        }
+
+        .participant-item:last-child {
+            border-bottom: none;
+        }
+
+        .split-options { /*MOD ALL Split Options*/
+            margin: 1rem 0;
+            display: flex;
+            gap: 0.5rem;
+            background-color: var(--primary-light);
+            border-radius: var(--border-radius);
+            padding: 0.25rem;
+        }
+
+        .split-option {
+            flex: 1;
+            position: relative;
+        }
+
+        .split-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .split-option label {
+            display: block;
+            text-align: center;
+            padding: 0.75rem 0.5rem;
+            margin: 0;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .split-option input[type="radio"]:checked + label {
+            background-color: var(--primary-color);
+            color: white;
+            box-shadow: var(--box-shadow);
+        }
+
+        .split-option:hover label {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .split-option input[type="radio"]:focus + label {
+            box-shadow: 0 0 0 2px var(--primary-dark);
+        }
+
+        .custom-split {
+            display: none;
+            margin-top: 1rem;
+            padding: 1rem;
+            background-color: var(--primary-light);
+            border-radius: var(--border-radius);
+        }
+
+        .custom-split.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .custom-split-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .custom-split-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .custom-split-item label {
+            margin-right: 0.75rem;
+            width: 120px;
+            margin-bottom: 0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2.5rem 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3.5rem;
+            margin-bottom: 1.25rem;
+            color: var(--primary-light);
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+        }
+
+        .checkbox-group { /*MOD All Checkbox group items*/
+            margin: 0.75rem 0;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.6rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .checkbox-item:hover {
+            background-color: var(--primary-light);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            margin-right: 0.75rem;
+            cursor: pointer;
+            position: relative;
+            vertical-align: middle;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-item input[type="checkbox"]:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .checkbox-item input[type="checkbox"]:checked::after {
+            content: '\2713';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .checkbox-item input[type="checkbox"]:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .checkbox-item label {
+            margin-bottom: 0;
+            cursor: pointer;
+            flex: 1;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .checkbox-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .group-card {
+            cursor: pointer;
+            transition: var(--transition);
+            border-left: 4px solid transparent;
+        }
+
+        .group-card:hover {
+            border-left: 4px solid var(--primary-color);
+            transform: translateX(5px);
+        }
+
+        .group-card h3 {
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .group-card p {
+            color: var(--text-secondary);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 50px;
+            font-size: 0.9rem; /*MOD*/
+            font-weight: 500;
+            margin-right: 0.5rem;
+        }
+
+        .badge-primary {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .badge-secondary {
+            background-color: var(--secondary-light);
+            color: var(--secondary-color);
+        }
+
+        
+        h3 { /*MOD*/
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: var(--border-color);
+            margin: 1.5rem 0;
+        }
+
+        .participants-container {
+            margin-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+        }
+
+        .expense-type-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .expense-type-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 0.75rem 0.5rem;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .expense-type-item:hover {
+            background-color: var(--primary-light);
+        }
+
+        .expense-type-item.selected {
+            background-color: var(--primary-light);
+            border: 2px solid var(--primary-color);
+        }
+
+        .expense-type-icon {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .expense-type-item.selected .expense-type-icon {
+            color: var(--primary-color);
+        }
+
+        .expense-type-label {
+            font-size: 0.8rem;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .expense-type-item.selected .expense-type-label {
+            color: var(--primary-dark);
+            font-weight: 500;
+        }
+
+        .currency-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .currency-selector label {
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .currency-selector select {
+            flex: 1;
+        }
+
+        .expense-type-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 50px;
+            background-color: #f5f5f5;
+            margin-right: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .expense-type-badge i {
+            font-size: 1rem;
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            height: 60px;
+            border-radius: 30px;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 90;
+            padding: 0 1.5rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+            }
+        }
+
+        .fab i {
+            font-size: 1.5rem;
+            margin-right: 0.5rem;
+        }
+
+        .fab-text {
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .fab:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            background-color: var(--primary-dark);
+            animation: none;
+        }
+
+        /* Toast notification */
+        .toast-container {
+            position: fixed;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000; /*MOD*/
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            pointer-events: none;
+        }
+
+        .toast {
+            padding: 0.75rem 1.5rem;
+            background-color: #333;
+            color: white;
+            border-radius: 50px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            max-width: 90vw;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .toast.success {
+            background-color: var(--success-color);
+        }
+
+        .toast.error {
+            background-color: var(--danger-color);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Expense form modal */
+        .expense-form-modal { /*MOD*/
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .expense-form-container { /*MOD*/
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            animation: slideUp 0.3s ease;
+        }
+
+        .expense-form-header { /*MOD*/
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .expense-form-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .expense-form-body { /*MOD*/
+            padding: 1.5rem;
+            overflow-y: auto;
+            max-height: calc(90vh - 140px); /* Adjust based on header and footer height */
+        }
+
+        .expense-form-footer { /*MOD*/
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            padding: 1.25rem;
+            border-top: 1px solid var(--border-color);
+            position: sticky;
+            bottom: 0;
+            background: white;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+        }
+
+        .form-section {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .form-section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .form-section-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+        }
+
+        .close-modal-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+        }
+
+        .close-modal-btn:hover { /*MOD*/
+            color: var(--danger-color);
+        }
+
+        /* Guest participant styles */
+        .guest-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 50px;
+            background-color: #FFF3E0;
+            color: #FF9800;
+            font-size: 0.8rem;
+            font-weight: 650;
+            margin-left: 0.5rem;
+        }
+
+        .add-guest-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            background-color: #f5f5f5;
+            border: 1px dashed var(--border-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+        }
+
+        .add-guest-btn:hover {
+            background-color: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        .guest-input-container {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background-color: #FFF8E1;
+            border-radius: var(--border-radius);
+            border-left: 3px solid #FFC107;
+            display: none;
+        }
+
+        .guest-input-container.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* For mobile screens */
+        @media (max-width: 600px) {
+            .container {
+                padding: 0.75rem;
+                margin-top: 1rem;
+            }
+            
+            .card {
+                padding: 1.25rem;
+            }
+            
+            .btn {
+                font-size: 0.95rem;
+                padding: 0.6rem 1rem;
+            }
+
+            .tabs {
+                overflow-x: auto;
+                white-space: nowrap;
+                padding-bottom: 0.5rem;
+            }
+
+            .tab {
+                padding: 0.6rem 1rem;
+            }
+
+            .expense-type-selector {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .fab {
+                height: 50px;
+                padding: 0 1.25rem;
+            }
+            
+            .fab i {
+                font-size: 1.25rem;
+            }
+            .group-selector { /*MOD*/
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .group-actions { /*MOD*/
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            #back-to-groups { /*MOD*/
+                width: 100%;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="header-title">
+            <h1 id="app-title">Expense Splitter</h1>
+        </div>
+        <div class="language-selector">
+            <button class="language-btn active" data-lang="en">EN</button>
+            <button class="language-btn" data-lang="es">ES</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div id="groups-screen">
+            <div class="card">
+                <h2><i class="fas fa-users"></i> <span class="i18n" data-i18n="my_groups">My Groups</span></h2>
+                <div id="groups-list">
+                    <!-- Groups will be listed here -->
+                </div>
+                <div class="divider"></div>
+                <button class="btn btn-block" id="show-create-group-modal">
+                    <i class="fas fa-plus-circle"></i> <span class="i18n" data-i18n="create_new_group">Create New Group</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="group-detail-screen" style="display: none;">
+            <div class="group-selector">
+                <button class="btn btn-secondary" id="back-to-groups">
+                    <i class="fas fa-arrow-left"></i> <span class="i18n" data-i18n="back_to_groups">Back to Groups</span>
+                </button>
+                <div class="group-actions">
+                    <button class="btn btn-primary" id="share-group-btn"> <!--MOD-->
+                        <i class="fas fa-qrcode"></i> <span class="i18n" data-i18n="share_group">Share Group</span>
+                    </button>
+                    <button class="btn btn-danger" id="delete-group-btn">
+                        <i class="fas fa-trash"></i> <span class="i18n" data-i18n="delete_group">Delete Group</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" data-tab="expenses"><i class="fas fa-receipt"></i> <span class="i18n" data-i18n="expenses">Expenses</span></div>
+                <div class="tab" data-tab="balances"><i class="fas fa-balance-scale"></i> <span class="i18n" data-i18n="balances">Balances</span></div>
+                <div class="tab" data-tab="participants"><i class="fas fa-user-friends"></i> <span class="i18n" data-i18n="participants">Participants</span></div>
+            </div>
+
+            <div class="tab-content active" id="expenses-tab">
+                <div class="card">
+                    <h2><i class="fas fa-list"></i> <span class="i18n" data-i18n="expenses">Expenses</span></h2>
+                    <div id="expense-list">
+                        <!-- Expenses will be listed here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="balances-tab">
+                <div class="card">
+                    <h2><i class="fas fa-balance-scale"></i> <span class="i18n" data-i18n="balances">Balances</span></h2>
+                    <div id="balances-list">
+                        <!-- Balances will be listed here -->
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2><i class="fas fa-exchange-alt"></i> <span class="i18n" data-i18n="settlements">Settlements</span></h2>
+                    <div id="settlements-list">
+                        <!-- Settlement suggestions will be listed here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="participants-tab">
+                <div class="card">
+                    <h2><i class="fas fa-user-friends"></i> <span class="i18n" data-i18n="participants">Participants</span></h2>
+                    <ul class="participant-list" id="participant-list">
+                        <!-- Participants will be listed here -->
+                    </ul>
+                    <div class="input-group">
+                        <input type="text" id="new-participant-name" class="i18n-placeholder" data-i18n-placeholder="new_participant_name" placeholder="New participant name">
+                        <button class="btn" id="add-participant-btn">
+                            <i class="fas fa-plus"></i> <span class="i18n" data-i18n="add">Add</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="fab" id="add-expense-fab" style="display: none;">
+        <i class="fas fa-plus"></i>
+        <span class="fab-text i18n" data-i18n="add_expense">Add Expense</span>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Create Group Modal MOD -->
+    <div class="modal" id="create-group-modal">
+        <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title"><i class="fas fa-users"></i> <span class="i18n" data-i18n="create_new_group">Create New Group</span></div>
+            <span class="close" id="close-create-group-modal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+            <label for="new-group-name" class="i18n" data-i18n="group_name">Group Name</label>
+            <input type="text" id="new-group-name" class="i18n-placeholder" data-i18n-placeholder="group_name_placeholder" placeholder="e.g., Trip to Paris, Roommates, etc." required>
+            </div>
+            <div class="form-group">
+            <label for="group-currency" class="i18n" data-i18n="currency">Currency</label>
+            <select id="group-currency" class="currency-selector">
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="JPY">JPY (¥)</option>
+                <option value="CAD">CAD (C$)</option>
+                <option value="AUD">AUD (A$)</option>
+                <option value="CNY">CNY (¥)</option>
+                <option value="INR">INR (₹)</option>
+                <option value="BRL">BRL (R$)</option>
+                <option value="MXN">MXN ($)</option>
+            </select>
+            </div>
+            <div class="form-group">
+            <h3><i class="fas fa-user-friends"></i> <span class="i18n" data-i18n="add_participants">Add Participants</span></h3>
+            <p class="i18n" style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem;" data-i18n="add_participants_hint">Add participants to your group (you can add more later)</p>
+            <div id="initial-participants-list">
+                <div class="participant-input" style="margin-bottom: 0.75rem;">
+                <div class="input-group">
+                    <input type="text" class="initial-participant i18n-placeholder" data-i18n-placeholder="participant_name" placeholder="Participant name">
+                    <button type="button" class="btn btn-sm remove-initial-participant" style="background-color: #f5f5f5; color: var(--text-color);">
+                    <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                </div>
+            </div>
+            <button type="button" class="btn btn-secondary" id="add-initial-participant" style="margin-top: 0.5rem;">
+                <i class="fas fa-plus"></i> <span class="i18n" data-i18n="add_another_participant">Add Another Participant</span>
+            </button>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" id="cancel-create-group"><span class="i18n" data-i18n="cancel">Cancel</span></button>
+            <button class="btn" id="create-group-btn"><span class="i18n" data-i18n="create_group">Create Group</span></button>
+        </div>
+        </div>
+    </div>
+
+    <!-- QR Code Share Modal  MOD MOD-->
+    <div class="modal" id="share-qr-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-qrcode"></i> <span class="i18n" data-i18n="share_via_qr">Share via QR Code</span></div>
+                <span class="close" id="close-share-qr-modal">&times;</span>
+            </div>
+            <div class="modal-body" style="text-align: center;">
+                <p class="i18n" data-i18n="scan_qr_instructions">Scan this QR code with another device to share this group</p>
+                <canvas id="qr-canvas" style="margin: 1rem auto; max-width: 100%;"></canvas>
+                
+                <div class="share-url-container">
+                    <p><span class="i18n" data-i18n="or_share_link">Or share this link:</span></p>
+                    <div class="copy-url-input-group">
+                        <input type="text" id="share-url-input" readonly>
+                        <button id="copy-url-btn" class="btn">
+                            <i class="fas fa-copy"></i> <span class="i18n" data-i18n="copy">Copy</span>
+                        </button>
+                    </div>
+                    <p id="copy-success-message" style="display: none; color: green; margin-top: 0.5rem;">
+                        <i class="fas fa-check"></i> <span class="i18n" data-i18n="link_copied">Link copied to clipboard!</span>
+                    </p>
+                </div>
+                
+                <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 1rem;" class="i18n" data-i18n="qr_privacy_note">Note: Group data is encoded in the QR code and not stored on any server.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="close-qr-btn"><span class="i18n" data-i18n="close">Close</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Expense Modal -->
+    <div class="modal" id="delete-expense-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title"><i class="fas fa-trash"></i> <span class="i18n" data-i18n="delete_expense">Delete Expense</span></div>
+                <span class="close" id="close-delete-expense-modal">&times;</span>
+            </div>
+            <p class="i18n" data-i18n="delete_expense_confirm">Are you sure you want to delete this expense?</p>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-delete-expense"><span class="i18n" data-i18n="cancel">Cancel</span></button>
+                <button class="btn btn-danger" id="confirm-delete-expense"><span class="i18n" data-i18n="delete">Delete</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Expense Modal -->
+    <div class="modal" id="edit-expense-modal">
+        <div class="expense-form-container">
+            <div class="expense-form-header">
+                <div class="expense-form-title"><i class="fas fa-edit"></i> <span class="i18n" data-i18n="edit_expense">Edit Expense</span></div>
+                <button class="close-modal-btn" id="close-edit-expense-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="expense-form-body">
+                <form id="edit-expense-form">
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-info-circle"></i> <span class="i18n" data-i18n="basic_information">Basic Information</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-expense-description" class="i18n" data-i18n="description">Description</label>
+                            <input type="text" id="edit-expense-description" class="i18n-placeholder" data-i18n-placeholder="expense_description_placeholder" placeholder="e.g., Dinner, Groceries, Tickets" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-expense-amount" class="i18n" data-i18n="amount">Amount</label>
+                            <div class="input-group">
+                                <span id="edit-currency-symbol" style="display: flex; align-items: center; padding: 0 10px; background: #f5f5f5; border: 1px solid var(--border-color); border-radius: var(--border-radius) 0 0 var(--border-radius);">$</span>
+                                <input type="number" id="edit-expense-amount" step="0.01" min="0.01" placeholder="0.00" required style="border-radius: 0 var(--border-radius) var(--border-radius) 0;">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-expense-date" class="i18n" data-i18n="date">Date</label>
+                            <input type="date" id="edit-expense-date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-section-title"> <!--MOD-->
+                            <i class="fas fa-tag"></i> <span class="i18n" data-i18n="expense_category">Expense Category</span>
+                        </div>
+                        <div class="expense-type-selector" id="edit-expense-type-selector">
+                            <div class="expense-type-item" data-type="meals">
+                                <i class="fas fa-utensils expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="meals">Meals</span>
+                            </div>
+                            <div class="expense-type-item" data-type="groceries">
+                                <i class="fas fa-shopping-basket expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="groceries">Groceries</span>
+                            </div>
+                            <div class="expense-type-item" data-type="transportation">
+                                <i class="fas fa-shuttle-van expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="transport">Transport</span>
+                            </div>
+                            <div class="expense-type-item" data-type="accommodation">
+                                <i class="fas fa-bed expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="accommodation">Accommodation</span>
+                            </div>
+                            <div class="expense-type-item" data-type="activities">
+                                <i class="fas fa-ticket-alt expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="activities">Activities</span>
+                            </div>
+                            <div class="expense-type-item" data-type="shared_bills">
+                                <i class="fas fa-file-invoice-dollar expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="shared_bills">Shared Bills</span>
+                            </div>
+                            <div class="expense-type-item" data-type="gifts">
+                                <i class="fas fa-gift expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="gifts">Gifts</span>
+                            </div>
+                            <div class="expense-type-item" data-type="other">
+                                <i class="fas fa-ellipsis-h expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="other">Other</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="edit-expense-type" value="other">
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-user-circle"></i> <span class="i18n" data-i18n="payment_splitting">Payment & Splitting</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="edit-expense-payer" class="i18n" data-i18n="paid_by">Paid by</label>
+                            <select id="edit-expense-payer" required>
+                                <!-- Participants will be listed here -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="i18n" data-i18n="split_between">Split between</label>
+                            <div id="edit-expense-split-participants" class="checkbox-group">
+                                <!-- Participants will be listed here with checkboxes -->
+                            </div>
+                            
+                            <!-- Add guest button for edit expense -->
+                            <button type="button" class="add-guest-btn" id="edit-add-guest-btn">
+                                <i class="fas fa-user-plus"></i> <span class="i18n" data-i18n="add_guest">Add a guest for this expense</span>
+                            </button>
+                            
+                            <!-- Guest input container for edit expense -->
+                            <div class="guest-input-container" id="edit-guest-input-container">
+                                <div class="form-group">
+                                    <label for="edit-guest-name" class="i18n" data-i18n="guest_name">Guest Name</label>
+                                    <div class="input-group">
+                                        <input type="text" id="edit-guest-name" class="i18n-placeholder" data-i18n-placeholder="guest_name_placeholder" placeholder="Enter guest name">
+                                        <button type="button" class="btn" id="edit-add-guest-confirm">
+                                            <i class="fas fa-plus"></i> <span class="i18n" data-i18n="add">Add</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="i18n" data-i18n="split_type">Split type</label>
+                            <div class="split-options">
+                                <div class="split-option">
+                                    <input type="radio" id="edit-split-equal" name="edit-split-type" value="equal" checked>
+                                    <label for="edit-split-equal" class="i18n" data-i18n="equal">Equal</label>
+                                </div>
+                                <div class="split-option">
+                                    <input type="radio" id="edit-split-custom" name="edit-split-type" value="custom">
+                                    <label for="edit-split-custom" class="i18n" data-i18n="custom">Custom</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="custom-split" id="edit-custom-split-container">
+                            <!-- Custom split inputs will be added here -->
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="expense-form-footer">
+                <button class="btn btn-secondary" id="cancel-edit-expense"><span class="i18n" data-i18n="cancel">Cancel</span></button>
+                <button class="btn" id="save-edit-expense"><span class="i18n" data-i18n="save_changes">Save Changes</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Expense Form Modal -->
+    <div class="expense-form-modal" id="expense-form-modal">
+        <div class="expense-form-container">
+            <div class="expense-form-header">
+                <div class="expense-form-title"><i class="fas fa-plus-circle"></i> <span class="i18n" data-i18n="add_new_expense">Add New Expense</span></div>
+                <button class="close-modal-btn" id="close-expense-form-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="expense-form-body">
+                <form id="add-expense-form">
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-info-circle"></i> <span class="i18n" data-i18n="basic_information">Basic Information</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="expense-description" class="i18n" data-i18n="description">Description</label>
+                            <input type="text" id="expense-description" class="i18n-placeholder" data-i18n-placeholder="expense_description_placeholder" placeholder="e.g., Dinner, Groceries, Tickets" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="expense-amount" class="i18n" data-i18n="amount">Amount</label>
+                            <div class="input-group">
+                                <span id="currency-symbol" style="display: flex; align-items: center; padding: 0 10px; background: #f5f5f5; border: 1px solid var(--border-color); border-radius: var(--border-radius) 0 0 var(--border-radius);">$</span>
+                                <input type="number" id="expense-amount" step="0.01" min="0.01" placeholder="0.00" required style="border-radius: 0 var(--border-radius) var(--border-radius) 0;">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="expense-date" class="i18n" data-i18n="date">Date</label>
+                            <input type="date" id="expense-date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-section-title"> <!--MOD-->
+                            <i class="fas fa-tag"></i> <span class="i18n" data-i18n="expense_category">Expense Category</span>
+                        </div>
+                        <div class="expense-type-selector" id="expense-type-selector">
+                            <div class="expense-type-item" data-type="meals">
+                                <i class="fas fa-utensils expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="meals">Meals</span>
+                            </div>
+                            <div class="expense-type-item" data-type="groceries">
+                                <i class="fas fa-shopping-basket expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="groceries">Groceries</span>
+                            </div>
+                            <div class="expense-type-item" data-type="transportation">
+                                <i class="fas fa-shuttle-van expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="transport">Transport</span>
+                            </div>
+                            <div class="expense-type-item" data-type="accommodation">
+                                <i class="fas fa-bed expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="accommodation">Accommodation</span>
+                            </div>
+                            <div class="expense-type-item" data-type="activities">
+                                <i class="fas fa-ticket-alt expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="activities">Activities</span>
+                            </div>
+                            <div class="expense-type-item" data-type="shared_bills">
+                                <i class="fas fa-file-invoice-dollar expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="shared_bills">Shared Bills</span>
+                            </div>
+                            <div class="expense-type-item" data-type="gifts">
+                                <i class="fas fa-gift expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="gifts">Gifts</span>
+                            </div>
+                            <div class="expense-type-item" data-type="other">
+                                <i class="fas fa-ellipsis-h expense-type-icon"></i>
+                                <span class="expense-type-label i18n" data-i18n="other">Other</span>
+                            </div>
+                        </div>
+                        <input type="hidden" id="expense-type" value="other">
+                    </div>
+                    
+                    <div class="form-section">
+                        <div class="form-section-title">
+                            <i class="fas fa-user-circle"></i> <span class="i18n" data-i18n="payment_splitting">Payment & Splitting</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="expense-payer" class="i18n" data-i18n="paid_by">Paid by</label>
+                            <select id="expense-payer" required>
+                                <!-- Participants will be listed here -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="i18n" data-i18n="split_between">Split between</label>
+                            <div id="expense-split-participants" class="checkbox-group">
+                                <!-- Participants will be listed here with checkboxes -->
+                            </div>
+                            
+                            <!-- Add guest button -->
+                            <button type="button" class="add-guest-btn" id="add-guest-btn">
+                                <i class="fas fa-user-plus"></i> <span class="i18n" data-i18n="add_guest">Add a guest for this expense</span>
+                            </button>
+                            
+                            <!-- Guest input container -->
+                            <div class="guest-input-container" id="guest-input-container">
+                                <div class="form-group">
+                                    <label for="guest-name" class="i18n" data-i18n="guest_name">Guest Name</label>
+                                    <div class="input-group">
+                                        <input type="text" id="guest-name" class="i18n-placeholder" data-i18n-placeholder="guest_name_placeholder" placeholder="Enter guest name">
+                                        <button type="button" class="btn" id="add-guest-confirm">
+                                            <i class="fas fa-plus"></i> <span class="i18n" data-i18n="add">Add</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="i18n" data-i18n="split_type">Split type</label>
+                            <div class="split-options">
+                                <div class="split-option">
+                                    <input type="radio" id="split-equal" name="split-type" value="equal" checked>
+                                    <label for="split-equal" class="i18n" data-i18n="equal">Equal</label>
+                                </div>
+                                <div class="split-option">
+                                    <input type="radio" id="split-custom" name="split-type" value="custom">
+                                    <label for="split-custom" class="i18n" data-i18n="custom">Custom</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="custom-split" id="custom-split-container">
+                            <!-- Custom split inputs will be added here -->
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="expense-form-footer">
+                <button class="btn btn-secondary" id="cancel-expense-form"><span class="i18n" data-i18n="cancel">Cancel</span></button>
+                <button class="btn" id="submit-expense-form"><span class="i18n" data-i18n="add_expense">Add Expense</span></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data structure
+        let groups = [];
+        let currentGroupId = null;
+        let expenseToDelete = null;
+        let expenseToEdit = null;
+        let currentLanguage = 'en';
+        
+        // Language translations
+        const translations = {
+            en: {
+                // App title and navigation
+                app_title: 'Expense Splitter',
+                my_groups: 'My Groups',
+                create_new_group: 'Create New Group',
+                back_to_groups: 'Back to Groups',
+                delete_group: 'Delete Group',
+                
+                // Tabs
+                expenses: 'Expenses',
+                balances: 'Balances',
+                participants: 'Participants',
+                settlements: 'Settlements',
+                
+                // Form labels
+                group_name: 'Group Name',
+                group_name_placeholder: 'e.g., Trip to Paris, Roommates, etc.',
+                currency: 'Currency',
+                add_participants: 'Add Participants',
+                add_participants_hint: 'Add participants to your group (you can add more later)',
+                participant_name: 'Participant name',
+                new_participant_name: 'New participant name',
+                add_another_participant: 'Add Another Participant',
+                description: 'Description',
+                expense_description_placeholder: 'e.g., Dinner, Groceries, Tickets',
+                amount: 'Amount',
+                date: 'Date',
+                expense_category: 'Expense Category',
+                payment_splitting: 'Payment & Splitting',
+                paid_by: 'Paid by',
+                split_between: 'Split between',
+                split_type: 'Split type',
+                equal: 'Equal',
+                custom: 'Custom',
+                
+                // Expense categories MOD
+                meals: 'Meals',
+                groceries: 'Groceries',
+                transport: 'Transport',
+                accommodation: 'Accommodation',
+                activities: 'Activities',
+                shared_bills: 'Shared Bills',
+                gifts: 'Gifts',
+                other: 'Other',
+                
+                // Buttons
+                add: 'Add',
+                cancel: 'Cancel',
+                create_group: 'Create Group',
+                delete: 'Delete',
+                save_changes: 'Save Changes',
+                add_expense: 'Add Expense',
+                add_new_expense: 'Add New Expense',
+                edit_expense: 'Edit Expense',
+                delete_expense: 'Delete Expense',
+                
+                // Guest functionality
+                add_guest: 'Add a guest for this expense',
+                guest_name: 'Guest Name',
+                guest_name_placeholder: 'Enter guest name',
+                guest: 'Guest',
+                
+                // Confirmations
+                delete_expense_confirm: 'Are you sure you want to delete this expense?',
+                delete_group_confirm: 'Are you sure you want to delete this group? This action cannot be undone.',
+                
+                // Section titles
+                basic_information: 'Basic Information',
+                
+                // Empty states
+                no_groups_yet: 'You don\'t have any groups yet. Create your first group to get started!',
+                no_expenses_yet: 'No expenses yet. Add your first expense!',
+                no_participants_yet: 'No participants yet. Add your first participant!',
+                no_expenses_for_balances: 'No expenses yet. Add expenses to see balances.',
+                no_settlements_needed: 'No settlements needed yet.',
+                all_settled: 'All settled up! No payments needed.',
+                
+                // Toast messages
+                group_created: 'Group "{name}" created successfully!',
+                group_deleted: 'Group "{name}" deleted',
+                expense_added: 'Added {currency}{amount} expense paid by {name}',
+                expense_updated: 'Updated expense "{description}"',
+                expense_deleted: 'Expense "{description}" deleted',
+                participant_added: 'Added {name} to the group',
+                participant_removed: 'Removed {name} from the group',
+                guest_added: 'Added guest {name} for this expense',
+                participant_has_expenses: 'Cannot delete participant who is involved in expenses. Delete the expenses first.',
+                fill_all_fields: 'Please fill in all fields correctly',
+                select_participants: 'Please select at least one participant to split with',
+                enter_valid_amounts: 'Please enter valid amounts for all participants',
+                shares_mismatch: 'The sum of shares ({total}) doesn\'t match the expense amount ({amount})',
+
+                //QR sharing MOD
+                share_group: 'Share Group',
+                share_via_qr: 'Share via QR Code',
+                scan_qr_instructions: 'Scan this QR code with another device to share this group',
+                qr_privacy_note: 'Note: Group data is encoded in the QR code and not stored on any server.',
+                close: 'Close',
+                group_imported: 'Group "{name}" imported successfully!',
+                invalid_qr_data: 'Invalid QR code data. Could not import group.',
+                group_already_exists: 'A group with this ID already exists. Rename: "{name}"',
+                //MOD
+                or_share_link: 'Or share this link:',
+                copy: 'Copy',
+                link_copied: 'Link copied to clipboard!',
+
+
+                // Date formatting
+                today: 'Today',
+                yesterday: 'Yesterday',
+                
+                // Participant pays participant
+                pays: 'pays'
+
+
+                
+            },
+            es: {
+                // App title and navigation
+                app_title: 'Divisor de Gastos',
+                my_groups: 'Mis Grupos',
+                create_new_group: 'Crear Nuevo Grupo',
+                back_to_groups: 'Volver a Grupos',
+                delete_group: 'Eliminar Grupo',
+                
+                // Tabs
+                expenses: 'Gastos',
+                balances: 'Balances',
+                participants: 'Participantes',
+                settlements: 'Liquidaciones',
+                
+                // Form labels
+                group_name: 'Nombre del Grupo',
+                group_name_placeholder: 'ej., Viaje a París, Compañeros de piso, etc.',
+                currency: 'Moneda',
+                add_participants: 'Añadir Participantes',
+                add_participants_hint: 'Añade participantes a tu grupo (puedes añadir más después)',
+                participant_name: 'Nombre del participante',
+                new_participant_name: 'Nombre del nuevo participante',
+                add_another_participant: 'Añadir Otro Participante',
+                description: 'Descripción',
+                expense_description_placeholder: 'ej., Cena, Compras, Entradas',
+                amount: 'Cantidad',
+                date: 'Fecha',
+                expense_category: 'Categoría de Gasto',
+                payment_splitting: 'Pago y División',
+                paid_by: 'Pagado por',
+                split_between: 'Dividir entre',
+                split_type: 'Tipo de división',
+                equal: 'Igual',
+                custom: 'Personalizado',
+                
+                // Expense categories MOD
+                meals: 'Comidas',
+                groceries: 'Compras',
+                transport: 'Transporte',
+                accommodation: 'Alojamiento',
+                activities: 'Actividades',
+                shared_bills: 'Gastos Compartidos',
+                gifts: 'Regalos',
+                other: 'Otro',
+                
+                // Buttons
+                add: 'Añadir',
+                cancel: 'Cancelar',
+                create_group: 'Crear Grupo',
+                delete: 'Eliminar',
+                save_changes: 'Guardar Cambios',
+                add_expense: 'Añadir Gasto',
+                add_new_expense: 'Añadir Nuevo Gasto',
+                edit_expense: 'Editar Gasto',
+                delete_expense: 'Eliminar Gasto',
+                
+                // Guest functionality
+                add_guest: 'Añadir un invitado para este gasto',
+                guest_name: 'Nombre del Invitado',
+                guest_name_placeholder: 'Introduce el nombre del invitado',
+                guest: 'Invitado',
+                
+                // Confirmations
+                delete_expense_confirm: '¿Estás seguro de que quieres eliminar este gasto?',
+                delete_group_confirm: '¿Estás seguro de que quieres eliminar este grupo? Esta acción no se puede deshacer.',
+                
+                // Section titles
+                basic_information: 'Información Básica',
+                
+                // Empty states
+                no_groups_yet: 'Aún no tienes grupos. ¡Crea tu primer grupo para empezar!',
+                no_expenses_yet: 'Aún no hay gastos. ¡Añade tu primer gasto!',
+                no_participants_yet: 'Aún no hay participantes. ¡Añade tu primer participante!',
+                no_expenses_for_balances: 'Aún no hay gastos. Añade gastos para ver los balances.',
+                no_settlements_needed: 'Aún no se necesitan liquidaciones.',
+                all_settled: '¡Todo saldado! No se necesitan pagos.',
+                
+                // Toast messages
+                group_created: '¡Grupo "{name}" creado con éxito!',
+                group_deleted: 'Grupo "{name}" eliminado',
+                expense_added: 'Añadido gasto de {currency}{amount} pagado por {name}',
+                expense_updated: 'Actualizado gasto "{description}"',
+                expense_deleted: 'Gasto "{description}" eliminado',
+                participant_added: 'Añadido {name} al grupo',
+                participant_removed: 'Eliminado {name} del grupo',
+                guest_added: 'Añadido invitado {name} para este gasto',
+                participant_has_expenses: 'No se puede eliminar un participante que está involucrado en gastos. Elimina primero los gastos.',
+                fill_all_fields: 'Por favor, rellena todos los campos correctamente',
+                select_participants: 'Por favor, selecciona al menos un participante para dividir',
+                enter_valid_amounts: 'Por favor, introduce cantidades válidas para todos los participantes',
+                shares_mismatch: 'La suma de las partes ({total}) no coincide con el importe del gasto ({amount})',
+                
+                //QR sharing MOD
+                share_group: 'Compartir Grupo',
+                share_via_qr: 'Compartir vía Código QR',
+                scan_qr_instructions: 'Escanea este código QR con otro dispositivo para compartir este grupo',
+                qr_privacy_note: 'Nota: Los datos del grupo están codificados en el código QR y no se almacenan en ningún servidor.',
+                close: 'Cerrar',
+                group_imported: '¡Grupo "{name}" importado con éxito!',
+                invalid_qr_data: 'Datos de código QR no válidos. No se pudo importar el grupo.',
+                group_already_exists: 'Ya existe un grupo con este ID. Renombrado: "{name}"',
+                //MOD
+                or_share_link: 'O comparte este enlace:',
+                copy: 'Copiar',
+                link_copied: '¡Enlace copiado al portapapeles!',
+
+                // Date formatting
+                today: 'Hoy',
+                yesterday: 'Ayer',
+                
+                // Participant pays participant
+                pays: 'paga a'
+            }
+        };
+        
+        // Currency symbols mapping
+        const currencySymbols = {
+            'USD': '$',
+            'EUR': '€',
+            'GBP': '£',
+            'JPY': '¥',
+            'CAD': 'C$',
+            'AUD': 'A$',
+            'CNY': '¥',
+            'INR': '₹',
+            'BRL': 'R$',
+            'MXN': '$'
+        };
+        
+        // Expense type icons mapping
+        const expenseTypeIcons = {
+            'food': 'fas fa-utensils',
+            'transportation': 'fas fa-car',
+            'accommodation': 'fas fa-home',
+            'entertainment': 'fas fa-film',
+            'shopping': 'fas fa-shopping-bag',
+            'utilities': 'fas fa-bolt',
+            'health': 'fas fa-medkit',
+            'other': 'fas fa-ellipsis-h'
+        };
+        
+        // DOM Elements
+        const groupsScreen = document.getElementById('groups-screen');
+        const groupDetailScreen = document.getElementById('group-detail-screen');
+        const groupsList = document.getElementById('groups-list');
+        const newGroupNameInput = document.getElementById('new-group-name');
+        const groupCurrencySelect = document.getElementById('group-currency');
+        const createGroupBtn = document.getElementById('create-group-btn');
+        const backToGroupsBtn = document.getElementById('back-to-groups');
+        const deleteGroupBtn = document.getElementById('delete-group-btn');
+        const appTitle = document.getElementById('app-title');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const addExpenseForm = document.getElementById('add-expense-form');
+        const expenseDescription = document.getElementById('expense-description');
+        const expenseAmount = document.getElementById('expense-amount');
+        const expenseDate = document.getElementById('expense-date');
+        const expenseTypeSelector = document.getElementById('expense-type-selector');
+        const expenseTypeInput = document.getElementById('expense-type');
+        const expensePayer = document.getElementById('expense-payer');
+        const expenseSplitParticipants = document.getElementById('expense-split-participants');
+        const expenseList = document.getElementById('expense-list');
+        const splitTypeRadios = document.querySelectorAll('input[name="split-type"]');
+        const customSplitContainer = document.getElementById('custom-split-container');
+        const newParticipantNameInput = document.getElementById('new-participant-name');
+        const addParticipantBtn = document.getElementById('add-participant-btn');
+        const participantList = document.getElementById('participant-list');
+        const balancesList = document.getElementById('balances-list');
+        const settlementsList = document.getElementById('settlements-list');
+        const deleteExpenseModal = document.getElementById('delete-expense-modal');
+        const closeDeleteExpenseModal = document.getElementById('close-delete-expense-modal');
+        const cancelDeleteExpenseBtn = document.getElementById('cancel-delete-expense');
+        const confirmDeleteExpenseBtn = document.getElementById('confirm-delete-expense');
+        const createGroupModal = document.getElementById('create-group-modal');
+        const showCreateGroupModalBtn = document.getElementById('show-create-group-modal');
+        const closeCreateGroupModalBtn = document.getElementById('close-create-group-modal');
+        const cancelCreateGroupBtn = document.getElementById('cancel-create-group');
+        const initialParticipantsList = document.getElementById('initial-participants-list');
+        const addInitialParticipantBtn = document.getElementById('add-initial-participant');
+        const currencySymbolSpan = document.getElementById('currency-symbol');
+        const addExpenseFab = document.getElementById('add-expense-fab');
+        const expenseFormModal = document.getElementById('expense-form-modal');
+        const closeExpenseFormModal = document.getElementById('close-expense-form-modal');
+        const cancelExpenseForm = document.getElementById('cancel-expense-form');
+        const submitExpenseForm = document.getElementById('submit-expense-form');
+        
+        // Guest functionality elements
+        const addGuestBtn = document.getElementById('add-guest-btn');
+        const guestInputContainer = document.getElementById('guest-input-container');
+        const guestNameInput = document.getElementById('guest-name');
+        const addGuestConfirmBtn = document.getElementById('add-guest-confirm');
+        
+        // Edit guest functionality elements
+        const editAddGuestBtn = document.getElementById('edit-add-guest-btn');
+        const editGuestInputContainer = document.getElementById('edit-guest-input-container');
+        const editGuestNameInput = document.getElementById('edit-guest-name');
+        const editAddGuestConfirmBtn = document.getElementById('edit-add-guest-confirm');
+        
+        // Language selector elements
+        const languageButtons = document.querySelectorAll('.language-btn');
+        
+        // Edit expense modal elements
+        const editExpenseModal = document.getElementById('edit-expense-modal');
+        const closeEditExpenseModal = document.getElementById('close-edit-expense-modal');
+        const cancelEditExpenseBtn = document.getElementById('cancel-edit-expense');
+        const saveEditExpenseBtn = document.getElementById('save-edit-expense');
+        const editExpenseDescription = document.getElementById('edit-expense-description');
+        const editExpenseAmount = document.getElementById('edit-expense-amount');
+        const editExpenseDate = document.getElementById('edit-expense-date');
+        const editExpenseTypeSelector = document.getElementById('edit-expense-type-selector');
+        const editExpenseTypeInput = document.getElementById('edit-expense-type');
+        const editExpensePayer = document.getElementById('edit-expense-payer');
+        const editExpenseSplitParticipants = document.getElementById('edit-expense-split-participants');
+        const editSplitTypeRadios = document.querySelectorAll('input[name="edit-split-type"]');
+        const editCustomSplitContainer = document.getElementById('edit-custom-split-container');
+        const editCurrencySymbolSpan = document.getElementById('edit-currency-symbol');
+
+        // DOM for QR code sharing MOD
+        const shareGroupBtn = document.getElementById('share-group-btn');
+        const shareQrModal = document.getElementById('share-qr-modal');
+        const closeShareQrModal = document.getElementById('close-share-qr-modal');
+        const closeQrBtn = document.getElementById('close-qr-btn');
+        const qrCanvas = document.getElementById('qr-canvas');
+        // DOM for share URL MOD
+        const shareUrlInput = document.getElementById('share-url-input');
+        const copyUrlBtn = document.getElementById('copy-url-btn');
+        const copySuccessMessage = document.getElementById('copy-success-message');
+
+        // Initialize app
+        function init() {
+            loadData();
+            loadLanguagePreference();
+            updateLanguage();
+            renderGroups();
+            setupEventListeners();
+            setupInitialParticipants();
+            setupExpenseTypeSelector();
+            setupEditExpenseTypeSelector();
+            checkForSharedGroup(); //MOD
+            
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            expenseDate.value = today;
+        }
+
+        // Load language preference from localStorage
+        function loadLanguagePreference() {
+            const savedLanguage = localStorage.getItem('expenseSplitterLanguage');
+            if (savedLanguage) {
+                currentLanguage = savedLanguage;
+            }
+        }
+
+        // Save language preference to localStorage
+        function saveLanguagePreference() {
+            localStorage.setItem('expenseSplitterLanguage', currentLanguage);
+        }
+
+        // Update UI language
+        function updateLanguage() {
+            // Update language buttons
+            languageButtons.forEach(btn => {
+                if (btn.getAttribute('data-lang') === currentLanguage) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            // Update all i18n elements
+            document.querySelectorAll('.i18n').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (key && translations[currentLanguage][key]) {
+                    element.textContent = translations[currentLanguage][key];
+                }
+            });
+            
+            // Update all i18n placeholders
+            document.querySelectorAll('.i18n-placeholder').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                if (key && translations[currentLanguage][key]) {
+                    element.placeholder = translations[currentLanguage][key];
+                }
+            });
+            
+            // Update app title
+            document.title = translations[currentLanguage].app_title;
+            if (currentGroupId === null) {
+                appTitle.textContent = translations[currentLanguage].app_title;
+            }
+            
+            // Re-render dynamic content to update language
+            renderGroups(); // Add this line to re-render groups
+
+            // If we're in a group, refresh the balances and settlements to update translations
+            if (currentGroupId !== null) {
+                renderExpenses(); //MOD
+                renderBalances();
+            }
+        }
+
+        // Setup expense type selector
+        function setupExpenseTypeSelector() {
+            const expenseTypeItems = expenseTypeSelector.querySelectorAll('.expense-type-item');
+            
+            expenseTypeItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove selected class from all items
+                    expenseTypeItems.forEach(i => i.classList.remove('selected'));
+                    
+                    // Add selected class to clicked item
+                    this.classList.add('selected');
+                    
+                    // Update hidden input value
+                    expenseTypeInput.value = this.getAttribute('data-type');
+                });
+            });
+            
+            // Set default selected type
+            expenseTypeItems[7].classList.add('selected'); // 'other' is the default
+            expenseTypeInput.value = 'other';
+        }
+        
+        // Setup edit expense type selector
+        function setupEditExpenseTypeSelector() {
+            const editExpenseTypeItems = editExpenseTypeSelector.querySelectorAll('.expense-type-item');
+            
+            editExpenseTypeItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    // Remove selected class from all items
+                    editExpenseTypeItems.forEach(i => i.classList.remove('selected'));
+                    
+                    // Add selected class to clicked item
+                    this.classList.add('selected');
+                    
+                    // Update hidden input value
+                    editExpenseTypeInput.value = this.getAttribute('data-type');
+                });
+            });
+        }
+
+        // Setup initial participants in create group modal
+        function setupInitialParticipants() {
+            // Add event listener to add more participant inputs
+            addInitialParticipantBtn.addEventListener('click', addInitialParticipantInput);
+            
+            // Add event listener to remove participant inputs
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('remove-initial-participant') || 
+                    e.target.parentElement.classList.contains('remove-initial-participant')) {
+                    const button = e.target.closest('.remove-initial-participant');
+                    if (button) {
+                        const participantInput = button.closest('.participant-input');
+                        if (initialParticipantsList.children.length > 1) {
+                            participantInput.remove();
+                        } else {
+                            participantInput.querySelector('input').value = '';
+                        }
+                    }
+                }
+            });
+        }
+
+        // Add initial participant input
+        function addInitialParticipantInput() {
+            const participantInput = document.createElement('div');
+            participantInput.className = 'participant-input';
+            participantInput.style.marginBottom = '0.75rem';
+            participantInput.innerHTML = `
+                <div class="input-group">
+                    <input type="text" placeholder="${translations[currentLanguage].participant_name}" class="initial-participant i18n-placeholder" data-i18n-placeholder="participant_name">
+                    <button type="button" class="btn btn-sm remove-initial-participant" style="background-color: #f5f5f5; color: var(--text-color);">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            initialParticipantsList.appendChild(participantInput);
+        }
+
+        // Load data from localStorage
+        function loadData() {
+            const savedGroups = localStorage.getItem('expenseSplitterGroups');
+            if (savedGroups) {
+                groups = JSON.parse(savedGroups);
+            }
+        }
+
+        // Save data to localStorage
+        function saveData() {
+            localStorage.setItem('expenseSplitterGroups', JSON.stringify(groups));
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Language selector
+            languageButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    currentLanguage = this.getAttribute('data-lang');
+                    saveLanguagePreference();
+                    updateLanguage();
+                });
+            });
+            
+            // Groups screen
+            showCreateGroupModalBtn.addEventListener('click', showCreateGroupModal);
+            closeCreateGroupModalBtn.addEventListener('click', closeCreateGroupModal);
+            cancelCreateGroupBtn.addEventListener('click', closeCreateGroupModal);
+            createGroupBtn.addEventListener('click', createGroup);
+            
+            // Group detail screen
+            backToGroupsBtn.addEventListener('click', showGroupsScreen);
+            deleteGroupBtn.addEventListener('click', deleteCurrentGroup);
+            
+            // Tabs
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+            
+            // Add expense FAB
+            addExpenseFab.addEventListener('click', showExpenseFormModal);
+            
+            // Expense form modal
+            closeExpenseFormModal.addEventListener('click', closeExpenseFormModalHandler);
+            cancelExpenseForm.addEventListener('click', closeExpenseFormModalHandler);
+            submitExpenseForm.addEventListener('click', submitExpenseFormHandler);
+            
+            // Guest functionality
+            addGuestBtn.addEventListener('click', toggleGuestInput);
+            addGuestConfirmBtn.addEventListener('click', addGuestParticipant);
+            
+            // Edit guest functionality
+            editAddGuestBtn.addEventListener('click', toggleEditGuestInput);
+            editAddGuestConfirmBtn.addEventListener('click', addEditGuestParticipant);
+            
+            // Edit expense modal
+            closeEditExpenseModal.addEventListener('click', closeEditExpenseModalHandler);
+            cancelEditExpenseBtn.addEventListener('click', closeEditExpenseModalHandler);
+            saveEditExpenseBtn.addEventListener('click', saveEditExpenseHandler);
+
+            // Share QR code MOD
+            shareGroupBtn.addEventListener('click', showShareQrModal);
+            closeShareQrModal.addEventListener('click', closeShareQrModalHandler);
+            closeQrBtn.addEventListener('click', closeShareQrModalHandler);
+            // Copy share URL MOD
+            copyUrlBtn.addEventListener('click', copyShareUrl);
+                    
+            // Split type change
+            splitTypeRadios.forEach(radio => {
+                radio.addEventListener('change', toggleCustomSplit);
+            });
+            
+            // Edit split type change
+            editSplitTypeRadios.forEach(radio => {
+                radio.addEventListener('change', toggleEditCustomSplit);
+            });
+            
+            // Add participant
+            addParticipantBtn.addEventListener('click', addParticipant);
+            
+            // Delete expense modal
+            closeDeleteExpenseModal.addEventListener('click', closeDeleteExpenseModalHandler);
+            cancelDeleteExpenseBtn.addEventListener('click', closeDeleteExpenseModalHandler);
+            confirmDeleteExpenseBtn.addEventListener('click', confirmDeleteExpense);
+            
+            // Currency change
+            groupCurrencySelect.addEventListener('change', updateCurrencySymbol);
+            
+            // Close modals when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target === deleteExpenseModal) {
+                    closeDeleteExpenseModalHandler();
+                }
+                if (e.target === createGroupModal) {
+                    closeCreateGroupModal();
+                }
+                if (e.target === expenseFormModal) {
+                    closeExpenseFormModalHandler();
+                }
+                if (e.target === editExpenseModal) {
+                    closeEditExpenseModalHandler();
+                }
+                if (e.target === shareQrModal) { //MOD
+                    closeShareQrModalHandler();
+                }
+            });
+        }
+
+        // Toggle guest input container
+        function toggleGuestInput() {
+            if (guestInputContainer.classList.contains('active')) {
+                guestInputContainer.classList.remove('active');
+                guestNameInput.value = '';
+            } else {
+                guestInputContainer.classList.add('active');
+                guestNameInput.focus();
+            }
+        }
+
+        // Toggle edit guest input container
+        function toggleEditGuestInput() {
+            if (editGuestInputContainer.classList.contains('active')) {
+                editGuestInputContainer.classList.remove('active');
+                editGuestNameInput.value = '';
+            } else {
+                editGuestInputContainer.classList.add('active');
+                editGuestNameInput.focus();
+            }
+        }
+
+        // Add guest participant to expense form
+        function addGuestParticipant() {
+            const guestName = guestNameInput.value.trim();
+            if (!guestName) {
+                showToast(translations[currentLanguage].fill_all_fields, 'error');
+                return;
+            }
+            
+            const guestId = 'guest_' + Date.now().toString();
+            
+            // Add to the split participants list
+            const div = document.createElement('div');
+            div.className = 'checkbox-item';
+            div.innerHTML = `
+                <input type="checkbox" id="split-participant-${guestId}" value="${guestId}" checked data-is-guest="true" data-guest-name="${guestName}">
+                <label for="split-participant-${guestId}">
+                    ${guestName}
+                    <span class="guest-badge"><i class="fas fa-user-tag"></i> <span class="i18n" data-i18n="guest">${translations[currentLanguage].guest}</span></span>
+                </label>
+            `;
+            expenseSplitParticipants.appendChild(div);
+            
+            // Add to payer dropdown
+            const option = document.createElement('option');
+            option.value = guestId;
+            option.textContent = `${guestName} (${translations[currentLanguage].guest})`;
+            option.setAttribute('data-is-guest', 'true');
+            option.setAttribute('data-guest-name', guestName);
+            expensePayer.appendChild(option);
+            
+            // Update custom split if active
+            if (document.querySelector('input[name="split-type"]:checked').value === 'custom') {
+                renderCustomSplitInputs();
+            }
+            
+            // Hide guest input and clear
+            guestInputContainer.classList.remove('active');
+            guestNameInput.value = '';
+            
+            showToast(translations[currentLanguage].guest_added.replace('{name}', guestName), 'success');
+            
+            // Add event listener to checkbox to update custom split inputs
+            const checkbox = div.querySelector('input[type="checkbox"]');
+            checkbox.addEventListener('change', () => {
+                if (document.querySelector('input[name="split-type"]:checked').value === 'custom') {
+                    renderCustomSplitInputs();
+                }
+            });
+        }
+
+        // Add guest participant to edit expense form
+        function addEditGuestParticipant() {
+            const guestName = editGuestNameInput.value.trim();
+            if (!guestName) {
+                showToast(translations[currentLanguage].fill_all_fields, 'error');
+                return;
+            }
+            
+            const guestId = 'guest_' + Date.now().toString();
+            
+            // Add to the split participants list
+            const div = document.createElement('div');
+            div.className = 'checkbox-item';
+            div.innerHTML = `
+                <input type="checkbox" id="edit-split-participant-${guestId}" value="${guestId}" checked data-is-guest="true" data-guest-name="${guestName}">
+                <label for="edit-split-participant-${guestId}">
+                    ${guestName}
+                    <span class="guest-badge"><i class="fas fa-user-tag"></i> <span class="i18n" data-i18n="guest">${translations[currentLanguage].guest}</span></span>
+                </label>
+            `;
+            editExpenseSplitParticipants.appendChild(div);
+            
+            // Add to payer dropdown
+            const option = document.createElement('option');
+            option.value = guestId;
+            option.textContent = `${guestName} (${translations[currentLanguage].guest})`;
+            option.setAttribute('data-is-guest', 'true');
+            option.setAttribute('data-guest-name', guestName);
+            editExpensePayer.appendChild(option);
+            
+            // Update custom split if active
+            if (document.querySelector('input[name="edit-split-type"]:checked').value === 'custom') {
+                renderEditCustomSplitInputs();
+            }
+            
+            // Hide guest input and clear
+            editGuestInputContainer.classList.remove('active');
+            editGuestNameInput.value = '';
+            
+            showToast(translations[currentLanguage].guest_added.replace('{name}', guestName), 'success');
+            
+            // Add event listener to checkbox to update custom split inputs
+            const checkbox = div.querySelector('input[type="checkbox"]');
+            checkbox.addEventListener('change', () => {
+                if (document.querySelector('input[name="edit-split-type"]:checked').value === 'custom') {
+                    renderEditCustomSplitInputs();
+                }
+            });
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'default') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            
+            toastContainer.appendChild(toast);
+            
+            // Trigger reflow to enable animation
+            toast.offsetHeight;
+            
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+
+        // Update currency symbol
+        function updateCurrencySymbol() {
+            const currency = groupCurrencySelect.value;
+            const symbol = currencySymbols[currency] || '$';
+            currencySymbolSpan.textContent = symbol;
+            editCurrencySymbolSpan.textContent = symbol;
+        }
+
+        // Show expense form modal
+        function showExpenseFormModal() {
+            // Reset form
+            addExpenseForm.reset();
+            
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            expenseDate.value = today;
+            
+            // Reset expense type selection
+            const expenseTypeItems = expenseTypeSelector.querySelectorAll('.expense-type-item');
+            expenseTypeItems.forEach(item => item.classList.remove('selected'));
+            expenseTypeItems[7].classList.add('selected'); // Reset to 'other'
+            expenseTypeInput.value = 'other';
+            
+            // Hide custom split container
+            customSplitContainer.classList.remove('active');
+            
+            // Hide guest input container
+            guestInputContainer.classList.remove('active');
+            
+            // Update participants in the form
+            renderExpenseFormParticipants();
+            
+            // Show the modal
+            expenseFormModal.style.display = 'flex';
+        }
+
+        // Close expense form modal
+        function closeExpenseFormModalHandler() {
+            expenseFormModal.style.display = 'none';
+        }
+
+        // Submit expense form
+        function submitExpenseFormHandler() {
+            // Simulate form submission
+            const event = new Event('submit', { cancelable: true });
+            const formSubmitted = addExpenseForm.dispatchEvent(event);
+            
+            if (formSubmitted) {
+                // If the form validation passed and the event wasn't cancelled
+                addExpense(event);
+            }
+        }
+
+        // Show edit expense modal
+        function showEditExpenseModal(expenseId) {
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            const expense = group.expenses.find(e => e.id === expenseId);
+            if (!expense) return;
+            
+            expenseToEdit = expenseId;
+            
+            // Fill form with expense data
+            editExpenseDescription.value = expense.description;
+            editExpenseAmount.value = expense.amount;
+            
+            // Set date
+            const expenseDate = expense.date ? new Date(expense.date) : new Date();
+            editExpenseDate.value = expenseDate.toISOString().split('T')[0];
+            
+            // Set expense type
+            const expenseType = expense.expenseType || 'other';
+            editExpenseTypeInput.value = expenseType;
+            
+            const editExpenseTypeItems = editExpenseTypeSelector.querySelectorAll('.expense-type-item');
+            editExpenseTypeItems.forEach(item => {
+                item.classList.remove('selected');
+                if (item.getAttribute('data-type') === expenseType) {
+                    item.classList.add('selected');
+                }
+            });
+            
+            // Update currency symbol
+            editCurrencySymbolSpan.textContent = currencySymbols[group.currency] || '$';
+            
+            // Hide guest input container
+            editGuestInputContainer.classList.remove('active');
+            
+            // Update participants in the form
+            renderEditExpenseFormParticipants(expense);
+            
+            // Show the modal
+            editExpenseModal.style.display = 'flex';
+        }
+
+        // Close edit expense modal
+        function closeEditExpenseModalHandler() {
+            editExpenseModal.style.display = 'none';
+            expenseToEdit = null;
+        }
+
+        // Save edited expense
+        function saveEditExpenseHandler() {
+            if (!expenseToEdit) return;
+            
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            const expense = group.expenses.find(e => e.id === expenseToEdit);
+            if (!expense) return;
+            
+            const description = editExpenseDescription.value.trim();
+            const amount = parseFloat(editExpenseAmount.value);
+            const date = editExpenseDate.value;
+            const payerId = editExpensePayer.value;
+            const expenseType = editExpenseTypeInput.value;
+            
+            if (!description || isNaN(amount) || amount <= 0 || !payerId || !date) {
+                showToast(translations[currentLanguage].fill_all_fields, 'error');
+                return;
+            }
+            
+            const checkedParticipants = Array.from(document.querySelectorAll('#edit-expense-split-participants input:checked'))
+                .map(input => {
+                    const isGuest = input.getAttribute('data-is-guest') === 'true';
+                    const guestName = input.getAttribute('data-guest-name');
+                    return {
+                        id: input.value,
+                        isGuest: isGuest,
+                        name: isGuest ? guestName : null
+                    };
+                });
+            
+            if (checkedParticipants.length === 0) {
+                showToast(translations[currentLanguage].select_participants, 'error');
+                return;
+            }
+            
+            const splitType = document.querySelector('input[name="edit-split-type"]:checked').value;
+            let shares = {};
+            
+            if (splitType === 'equal') {
+                const shareAmount = amount / checkedParticipants.length;
+                checkedParticipants.forEach(participant => {
+                    shares[participant.id] = shareAmount;
+                });
+            } else {
+                // Custom split
+                let totalShares = 0;
+                
+                checkedParticipants.forEach(participant => {
+                    const shareInput = document.getElementById(`edit-split-${participant.id}`);
+                    const shareAmount = parseFloat(shareInput.value);
+                    
+                    if (isNaN(shareAmount) || shareAmount < 0) {
+                        showToast(translations[currentLanguage].enter_valid_amounts, 'error');
+                        return;
+                    }
+                    
+                    shares[participant.id] = shareAmount;
+                    totalShares += shareAmount;
+                });
+                
+                if (Math.abs(totalShares - amount) > 0.01) {
+                    const message = translations[currentLanguage].shares_mismatch
+                        .replace('{total}', totalShares.toFixed(2))
+                        .replace('{amount}', amount.toFixed(2));
+                    showToast(message, 'error');
+                    return;
+                }
+            }
+            
+            // Check if payer is a guest
+            const payerOption = Array.from(editExpensePayer.options).find(option => option.value === payerId);
+            const isPayerGuest = payerOption && payerOption.getAttribute('data-is-guest') === 'true';
+            const payerGuestName = isPayerGuest ? payerOption.getAttribute('data-guest-name') : null;
+            
+            // Collect all guests for this expense
+            const guests = [];
+            
+            // Add payer if they're a guest
+            if (isPayerGuest && payerGuestName) {
+                guests.push({
+                    id: payerId,
+                    name: payerGuestName
+                });
+            }
+            
+            // Add participants who are guests
+            checkedParticipants.forEach(participant => {
+                if (participant.isGuest && participant.id !== payerId) {
+                    guests.push({
+                        id: participant.id,
+                        name: participant.name
+                    });
+                }
+            });
+            
+            // Update expense
+            expense.description = description;
+            expense.amount = amount;
+            expense.date = new Date(date).toISOString();
+            expense.payerId = payerId;
+            expense.expenseType = expenseType;
+            expense.shares = shares;
+            expense.guests = guests;
+            
+            saveData();
+            
+            // Show success message
+            showToast(translations[currentLanguage].expense_updated.replace('{description}', description), 'success');
+            
+            // Close the modal
+            closeEditExpenseModalHandler();
+            
+            renderExpenses();
+            renderBalances();
+        }
+
+        // Render participants in the edit expense form
+        function renderEditExpenseFormParticipants(expense) {
+            editExpensePayer.innerHTML = '';
+            editExpenseSplitParticipants.innerHTML = '';
+            
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            // Populate payer dropdown with regular participants
+            group.participants.forEach(participant => {
+                const option = document.createElement('option');
+                option.value = participant.id;
+                option.textContent = participant.name;
+                if (participant.id === expense.payerId) {
+                    option.selected = true;
+                }
+                editExpensePayer.appendChild(option);
+            });
+            
+            // Add guests from the expense to the payer dropdown
+            if (expense.guests && expense.guests.length > 0) {
+                expense.guests.forEach(guest => {
+                    const option = document.createElement('option');
+                    option.value = guest.id;
+                    option.textContent = `${guest.name} (${translations[currentLanguage].guest})`;
+                    option.setAttribute('data-is-guest', 'true');
+                    option.setAttribute('data-guest-name', guest.name);
+                    if (guest.id === expense.payerId) {
+                        option.selected = true;
+                    }
+                    editExpensePayer.appendChild(option);
+                });
+            }
+            
+            // Populate split participants checkboxes with regular participants
+            group.participants.forEach(participant => {
+                const isInShares = participant.id in expense.shares;
+                
+                const div = document.createElement('div');
+                div.className = 'checkbox-item';
+                div.innerHTML = `
+                    <input type="checkbox" id="edit-split-participant-${participant.id}" value="${participant.id}" ${isInShares ? 'checked' : ''}>
+                    <label for="edit-split-participant-${participant.id}">${participant.name}</label>
+                `;
+                editExpenseSplitParticipants.appendChild(div);
+                
+                // Add event listener to checkboxes to update custom split inputs
+                const checkbox = div.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', () => {
+                    if (document.querySelector('input[name="edit-split-type"]:checked').value === 'custom') {
+                        renderEditCustomSplitInputs();
+                    }
+                });
+            });
+            
+            // Add guests from the expense to the split participants
+            if (expense.guests && expense.guests.length > 0) {
+                expense.guests.forEach(guest => {
+                    const isInShares = guest.id in expense.shares;
+                    
+                    const div = document.createElement('div');
+                    div.className = 'checkbox-item';
+                    div.innerHTML = `
+                        <input type="checkbox" id="edit-split-participant-${guest.id}" value="${guest.id}" ${isInShares ? 'checked' : ''} data-is-guest="true" data-guest-name="${guest.name}">
+                        <label for="edit-split-participant-${guest.id}">
+                            ${guest.name}
+                            <span class="guest-badge"><i class="fas fa-user-tag"></i> ${translations[currentLanguage].guest}</span>
+                        </label>
+                    `;
+                    editExpenseSplitParticipants.appendChild(div);
+                    
+                    // Add event listener to checkboxes to update custom split inputs
+                    const checkbox = div.querySelector('input[type="checkbox"]');
+                    checkbox.addEventListener('change', () => {
+                        if (document.querySelector('input[name="edit-split-type"]:checked').value === 'custom') {
+                            renderEditCustomSplitInputs();
+                        }
+                    });
+                });
+            }
+            
+            // Determine if it's a custom or equal split
+            const isCustomSplit = isCustomSplitExpense(expense);
+            
+            if (isCustomSplit) {
+                document.getElementById('edit-split-custom').checked = true;
+                editCustomSplitContainer.classList.add('active');
+                renderEditCustomSplitInputs(expense.shares);
+            } else {
+                document.getElementById('edit-split-equal').checked = true;
+                editCustomSplitContainer.classList.remove('active');
+            }
+        }
+
+        // Check if expense has custom split
+        function isCustomSplitExpense(expense) {
+            const shareValues = Object.values(expense.shares);
+            if (shareValues.length <= 1) return false;
+            
+            // If all shares are equal, it's an equal split
+            const firstShare = shareValues[0];
+            return !shareValues.every(share => Math.abs(share - firstShare) < 0.01);
+        }
+
+        // Toggle edit custom split inputs
+        function toggleEditCustomSplit() {
+            const splitType = document.querySelector('input[name="edit-split-type"]:checked').value;
+            if (splitType === 'custom') {
+                editCustomSplitContainer.classList.add('active');
+                renderEditCustomSplitInputs();
+            } else {
+                editCustomSplitContainer.classList.remove('active');
+            }
+        }
+
+        // Render edit custom split inputs
+        function renderEditCustomSplitInputs(existingShares = null) {
+            editCustomSplitContainer.innerHTML = '';
+            
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            const checkedParticipants = Array.from(document.querySelectorAll('#edit-expense-split-participants input:checked'))
+                .map(input => {
+                    const isGuest = input.getAttribute('data-is-guest') === 'true';
+                    const guestName = input.getAttribute('data-guest-name');
+                    return {
+                        id: input.value,
+                        name: isGuest ? guestName : group.participants.find(p => p.id === input.value)?.name || 'Unknown',
+                        isGuest: isGuest
+                    };
+                });
+            
+            if (checkedParticipants.length === 0) {
+                editCustomSplitContainer.innerHTML = `<p>${translations[currentLanguage].select_participants}</p>`;
+                return;
+            }
+            
+            const currencySymbol = currencySymbols[group.currency] || '$';
+            
+            checkedParticipants.forEach(participant => {
+                const shareAmount = existingShares && existingShares[participant.id] ? existingShares[participant.id] : 0;
+                
+                const div = document.createElement('div');
+                div.className = 'custom-split-item';
+                div.innerHTML = `
+                    <label for="edit-split-${participant.id}">
+                        ${participant.name}
+                        ${participant.isGuest ? `<span class="guest-badge"><i class="fas fa-user-tag"></i> ${translations[currentLanguage].guest}</span>` : ''}
+                    </label>
+                    <div class="input-group">
+                        <span style="display: flex; align-items: center; padding: 0 10px; background: #f5f5f5; border: 1px solid var(--border-color); border-radius: var(--border-radius) 0 0 var(--border-radius);">${currencySymbol}</span>
+                        <input type="number" id="edit-split-${participant.id}" min="0" step="0.01" value="${shareAmount.toFixed(2)}" required style="border-radius: 0 var(--border-radius) var(--border-radius) 0;">
+                    </div>
+                `;
+                editCustomSplitContainer.appendChild(div);
+            });
+        }
+
+        // Render participants in the expense form
+        function renderExpenseFormParticipants() {
+            expensePayer.innerHTML = '';
+            expenseSplitParticipants.innerHTML = '';
+            
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            // Populate payer dropdown
+            group.participants.forEach(participant => {
+                const option = document.createElement('option');
+                option.value = participant.id;
+                option.textContent = participant.name;
+                expensePayer.appendChild(option);
+            });
+            
+            // Populate split participants checkboxes
+            group.participants.forEach(participant => {
+                const div = document.createElement('div');
+                div.className = 'checkbox-item';
+                div.innerHTML = `
+                    <input type="checkbox" id="split-participant-${participant.id}" value="${participant.id}" checked>
+                    <label for="split-participant-${participant.id}">${participant.name}</label>
+                `;
+                expenseSplitParticipants.appendChild(div);
+                
+                // Add event listener to checkboxes to update custom split inputs
+                const checkbox = div.querySelector('input[type="checkbox"]');
+                checkbox.addEventListener('change', () => {
+                    if (document.querySelector('input[name="split-type"]:checked').value === 'custom') {
+                        renderCustomSplitInputs();
+                    }
+                });
+            });
+        }
+
+        // Show create group modal
+        function showCreateGroupModal() {
+            // Clear previous inputs
+            newGroupNameInput.value = '';
+            initialParticipantsList.innerHTML = '';
+            addInitialParticipantInput(); // Add at least one participant input
+            
+            // Reset currency to USD
+            groupCurrencySelect.value = 'USD';
+            updateCurrencySymbol();
+            
+            createGroupModal.style.display = 'flex';
+        }
+
+        // Close create group modal
+        function closeCreateGroupModal() {
+            createGroupModal.style.display = 'none';
+        }
+
+        // Render groups list
+        function renderGroups() {
+            groupsList.innerHTML = '';
+            
+            if (groups.length === 0) {
+                groupsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <p>${translations[currentLanguage].no_groups_yet}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            groups.forEach(group => {
+                const groupElement = document.createElement('div');
+                groupElement.className = 'card group-card';
+                
+                const participantCount = group.participants.length;
+                const expenseCount = group.expenses.length;
+                const currencySymbol = currencySymbols[group.currency] || '$';
+                
+                groupElement.innerHTML = `
+                    <h3>${group.name}</h3>
+                    <div>
+                        <span class="badge badge-primary">
+                            <i class="fas fa-user-friends"></i> ${participantCount} ${participantCount === 1 ? translations[currentLanguage].participants.slice(0, -1) : translations[currentLanguage].participants}
+                        </span>
+                        <span class="badge badge-secondary">
+                            <i class="fas fa-receipt"></i> ${expenseCount} ${expenseCount === 1 ? translations[currentLanguage].expenses.slice(0, -1) : translations[currentLanguage].expenses}
+                        </span>
+                        <span class="badge badge-primary">
+                            <i class="fas fa-money-bill-wave"></i> ${currencySymbol}
+                        </span>
+                    </div>
+                `;
+                groupElement.addEventListener('click', () => openGroup(group.id));
+                groupsList.appendChild(groupElement);
+            });
+        }
+
+        // Create a new group
+        function createGroup() {
+            const name = newGroupNameInput.value.trim();
+            if (!name) {
+                showToast(translations[currentLanguage].fill_all_fields, 'error');
+                return;
+            }
+            
+            const currency = groupCurrencySelect.value;
+            
+            // Get initial participants
+            const initialParticipants = [];
+            const participantInputs = document.querySelectorAll('.initial-participant');
+            
+            participantInputs.forEach(input => {
+                const name = input.value.trim();
+                if (name) {
+                    initialParticipants.push({
+                        id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                        name: name
+                    });
+                }
+            });
+            
+            if (initialParticipants.length === 0) {
+                showToast(translations[currentLanguage].select_participants, 'error');
+                return;
+            }
+            
+            const newGroup = {
+                id: Date.now().toString(),
+                name: name,
+                currency: currency,
+                participants: initialParticipants,
+                expenses: []
+            };
+            
+            groups.push(newGroup);
+            saveData();
+            renderGroups();
+            
+            // Show success message
+            showToast(translations[currentLanguage].group_created.replace('{name}', name), 'success');
+            
+            // Close the modal
+            closeCreateGroupModal();
+            
+            // Open the newly created group
+            openGroup(newGroup.id);
+        }
+
+        // Open a group
+        function openGroup(groupId) {
+            currentGroupId = groupId;
+            const group = findCurrentGroup();
+            
+            if (!group) {
+                showToast(translations[currentLanguage].fill_all_fields, 'error');
+                return;
+            }
+            
+            appTitle.textContent = group.name;
+            groupsScreen.style.display = 'none';
+            groupDetailScreen.style.display = 'block';
+            addExpenseFab.style.display = 'flex';
+            
+            // Update currency symbol
+            currencySymbolSpan.textContent = currencySymbols[group.currency] || '$';
+            editCurrencySymbolSpan.textContent = currencySymbols[group.currency] || '$';
+            
+            renderParticipants();
+            renderExpenses();
+            renderBalances();
+            
+            // Default to expenses tab
+            switchTab('expenses');
+        }
+
+        // Find current group
+        function findCurrentGroup() {
+            return groups.find(group => group.id === currentGroupId);
+        }
+
+        // Show groups screen
+        function showGroupsScreen() {
+            currentGroupId = null;
+            appTitle.textContent = translations[currentLanguage].app_title;
+            groupsScreen.style.display = 'block';
+            groupDetailScreen.style.display = 'none';
+            addExpenseFab.style.display = 'none';
+        }
+
+        // Delete current group
+        function deleteCurrentGroup() {
+            if (!currentGroupId) return;
+            
+            if (confirm(translations[currentLanguage].delete_group_confirm)) {
+                const groupName = findCurrentGroup().name;
+                
+                // Remove the group from the array
+                groups = groups.filter(group => group.id !== currentGroupId);
+                // Save to localStorage
+                saveData();
+                // Navigate back to groups screen
+                showGroupsScreen();
+                // Re-render the groups list so deleted group doesnt show up MOD
+                renderGroups();
+                showToast(translations[currentLanguage].group_deleted.replace('{name}', groupName), 'success');
+            }
+        }
+
+        // Switch tab
+        function switchTab(tabName) {
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabName) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            tabContents.forEach(content => {
+                if (content.id === `${tabName}-tab`) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+        }
+
+        // Toggle custom split inputs
+        function toggleCustomSplit() {
+            const splitType = document.querySelector('input[name="split-type"]:checked').value;
+            if (splitType === 'custom') {
+                customSplitContainer.classList.add('active');
+                renderCustomSplitInputs();
+            } else {
+                customSplitContainer.classList.remove('active');
+            }
+        }
+
+        // Render custom split inputs
+        function renderCustomSplitInputs() {
+            customSplitContainer.innerHTML = '';
+            
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            const checkedParticipants = Array.from(document.querySelectorAll('#expense-split-participants input:checked'))
+                .map(input => {
+                    const isGuest = input.getAttribute('data-is-guest') === 'true';
+                    const guestName = input.getAttribute('data-guest-name');
+                    return {
+                        id: input.value,
+                        name: isGuest ? guestName : group.participants.find(p => p.id === input.value)?.name || 'Unknown',
+                        isGuest: isGuest
+                    };
+                });
+            
+            if (checkedParticipants.length === 0) {
+                customSplitContainer.innerHTML = `<p>${translations[currentLanguage].select_participants}</p>`;
+                return;
+            }
+            
+            const currencySymbol = currencySymbols[group.currency] || '$';
+            
+            checkedParticipants.forEach(participant => {
+                const div = document.createElement('div');
+                div.className = 'custom-split-item';
+                div.innerHTML = `
+                    <label for="split-${participant.id}">
+                        ${participant.name}
+                        ${participant.isGuest ? `<span class="guest-badge"><i class="fas fa-user-tag"></i> ${translations[currentLanguage].guest}</span>` : ''}
+                    </label>
+                    <div class="input-group">
+                        <span style="display: flex; align-items: center; padding: 0 10px; background: #f5f5f5; border: 1px solid var(--border-color); border-radius: var(--border-radius) 0 0 var(--border-radius);">${currencySymbol}</span>
+                        <input type="number" id="split-${participant.id}" min="0" step="0.01" value="0" required style="border-radius: 0 var(--border-radius) var(--border-radius) 0;">
+                    </div>
+                `;
+                customSplitContainer.appendChild(div);
+            });
+        }
+
+        // Add expense
+        function addExpense(e) {
+            e.preventDefault();
+            
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            const description = expenseDescription.value.trim();
+            const amount = parseFloat(expenseAmount.value);
+            const date = expenseDate.value;
+            const payerId = expensePayer.value;
+            const expenseType = expenseTypeInput.value;
+            
+            if (!description || isNaN(amount) || amount <= 0 || !payerId || !date) {
+                showToast(translations[currentLanguage].fill_all_fields, 'error');
+                return;
+            }
+            
+            const checkedParticipants = Array.from(document.querySelectorAll('#expense-split-participants input:checked'))
+                .map(input => {
+                    const isGuest = input.getAttribute('data-is-guest') === 'true';
+                    const guestName = input.getAttribute('data-guest-name');
+                    return {
+                        id: input.value,
+                        isGuest: isGuest,
+                        name: isGuest ? guestName : null
+                    };
+                });
+            
+            if (checkedParticipants.length === 0) {
+                showToast(translations[currentLanguage].select_participants, 'error');
+                return;
+            }
+            
+            const splitType = document.querySelector('input[name="split-type"]:checked').value;
+            let shares = {};
+            
+            if (splitType === 'equal') {
+                const shareAmount = amount / checkedParticipants.length;
+                checkedParticipants.forEach(participant => {
+                    shares[participant.id] = shareAmount;
+                });
+            } else {
+                // Custom split
+                let totalShares = 0;
+                
+                checkedParticipants.forEach(participant => {
+                    const shareInput = document.getElementById(`split-${participant.id}`);
+                    const shareAmount = parseFloat(shareInput.value);
+                    
+                    if (isNaN(shareAmount) || shareAmount < 0) {
+                        showToast(translations[currentLanguage].enter_valid_amounts, 'error');
+                        return;
+                    }
+                    
+                    shares[participant.id] = shareAmount;
+                    totalShares += shareAmount;
+                });
+                
+                if (Math.abs(totalShares - amount) > 0.01) {
+                    const message = translations[currentLanguage].shares_mismatch
+                        .replace('{total}', totalShares.toFixed(2))
+                        .replace('{amount}', amount.toFixed(2));
+                    showToast(message, 'error');
+                    return;
+                }
+            }
+            
+            // Check if payer is a guest
+            const payerOption = Array.from(expensePayer.options).find(option => option.value === payerId);
+            const isPayerGuest = payerOption && payerOption.getAttribute('data-is-guest') === 'true';
+            const payerGuestName = isPayerGuest ? payerOption.getAttribute('data-guest-name') : null;
+            
+            // Collect all guests for this expense
+            const guests = [];
+            
+            // Add payer if they're a guest
+            if (isPayerGuest && payerGuestName) {
+                guests.push({
+                    id: payerId,
+                    name: payerGuestName
+                });
+            }
+            
+            // Add participants who are guests
+            checkedParticipants.forEach(participant => {
+                if (participant.isGuest && participant.id !== payerId) {
+                    guests.push({
+                        id: participant.id,
+                        name: participant.name
+                    });
+                }
+            });
+            
+            const newExpense = {
+                id: Date.now().toString(),
+                description: description,
+                amount: amount,
+                payerId: payerId,
+                expenseType: expenseType,
+                shares: shares,
+                date: new Date(date).toISOString(),
+                guests: guests
+            };
+            
+            group.expenses.push(newExpense);
+            saveData();
+            
+            // Show success message
+            const payer = isPayerGuest ? { name: payerGuestName } : group.participants.find(p => p.id === payerId);
+            const currencySymbol = currencySymbols[group.currency] || '$';
+            
+            const message = translations[currentLanguage].expense_added
+                .replace('{currency}', currencySymbol)
+                .replace('{amount}', amount.toFixed(2))
+                .replace('{name}', payer.name);
+            
+            showToast(message, 'success');
+            
+            // Close the modal
+            closeExpenseFormModalHandler();
+            
+            renderExpenses();
+            renderBalances();
+        }
+
+        // Group expenses by date
+        function groupExpensesByDate(expenses) {
+            const groupedExpenses = {};
+            
+            expenses.forEach(expense => {
+                const date = new Date(expense.date);
+                const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD format
+                
+                if (!groupedExpenses[dateKey]) {
+                    groupedExpenses[dateKey] = [];
+                }
+                
+                groupedExpenses[dateKey].push(expense);
+            });
+            
+            // Sort dates in descending order (newest first)
+            return Object.entries(groupedExpenses)
+                .sort(([dateA], [dateB]) => new Date(dateB) - new Date(dateA));
+        }
+
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+            
+            // Check if it's today
+            if (date.toDateString() === today.toDateString()) {
+                return translations[currentLanguage].today;
+            }
+            
+            // Check if it's yesterday
+            if (date.toDateString() === yesterday.toDateString()) {
+                return translations[currentLanguage].yesterday;
+            }
+            
+            // Format as Month Day, Year
+            const options = { month: 'long', day: 'numeric', year: 'numeric' };
+            return date.toLocaleDateString(undefined, options);
+        }
+
+        // Get expense type label
+        function getExpenseTypeLabel(expenseType) {
+            const key = expenseType || 'other';
+            return translations[currentLanguage][key] || translations[currentLanguage].other;
+        }
+
+        // Render expenses
+        function renderExpenses() {
+            expenseList.innerHTML = '';
+            
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            // Render no expenses message
+            if (group.expenses.length === 0) {
+                expenseList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-receipt"></i>
+                        <p>${translations[currentLanguage].no_expenses_yet}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group expenses by date
+            const groupedExpenses = groupExpensesByDate(group.expenses);
+            
+            // Render expenses list grouped by date
+            groupedExpenses.forEach(([dateKey, expenses]) => {
+                const dateGroup = document.createElement('div');
+                dateGroup.className = 'expense-date-group';
+                
+                const dateHeader = document.createElement('div');
+                dateHeader.className = 'expense-date-header';
+                dateHeader.innerHTML = `
+                    <i class="far fa-calendar-alt"></i> ${formatDate(dateKey)}
+                `;
+                
+                dateGroup.appendChild(dateHeader);
+                
+                const expensesList = document.createElement('ul');
+                expensesList.className = 'expense-list';
+                
+                expenses.forEach(expense => {
+                    // Find payer (could be a regular participant or a guest)
+                    let payer;
+                    
+                    if (expense.guests && expense.guests.length > 0) {
+                        // Check if payer is a guest
+                        payer = expense.guests.find(g => g.id === expense.payerId);
+                    }
+                    
+                    if (!payer) {
+                        // If not a guest or guest not found, look in regular participants
+                        payer = group.participants.find(p => p.id === expense.payerId);
+                    }
+                    
+                    if (!payer) return; // Skip if payer not found
+                    
+                    const expenseItem = document.createElement('li');
+                    expenseItem.className = 'expense-item';
+                    
+                    const expenseType = expense.expenseType || 'other';
+                    const expenseTypeIcon = expenseTypeIcons[expenseType] || expenseTypeIcons.other;
+                    const expenseTypeLabel = getExpenseTypeLabel(expenseType);
+                    const currencySymbol = currencySymbols[group.currency] || '$';
+                    
+                    // Check if payer is a guest
+                    const isPayerGuest = expense.guests && expense.guests.some(g => g.id === expense.payerId);
+                    
+                    expenseItem.innerHTML = `
+                        <div class="expense-details">
+                            <div class="expense-title">${expense.description}</div>
+                            <div class="expense-meta">
+                                <span class="expense-type-badge">
+                                    <i class="${expenseTypeIcon}"></i> ${expenseTypeLabel}
+                                </span>
+                                <span class="expense-payer">
+                                    <i class="fas fa-user"></i> ${payer.name}
+                                    ${isPayerGuest ? `<span class="guest-badge"><i class="fas fa-user-tag"></i> ${translations[currentLanguage].guest}</span>` : ''}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="expense-amount">${currencySymbol}${expense.amount.toFixed(2)}</div>
+                        <div class="expense-actions">
+                            <button class="expense-action-btn edit-expense" data-id="${expense.id}" title="${translations[currentLanguage].edit_expense}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="expense-action-btn delete-expense" data-id="${expense.id}" title="${translations[currentLanguage].delete_expense}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Add event listeners for edit and delete buttons
+                    const editBtn = expenseItem.querySelector('.edit-expense');
+                    const deleteBtn = expenseItem.querySelector('.delete-expense');
+                    
+                    editBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showEditExpenseModal(expense.id);
+                    });
+                    
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        showDeleteExpenseModal(expense.id);
+                    });
+                    
+                    expensesList.appendChild(expenseItem);
+                });
+                
+                dateGroup.appendChild(expensesList);
+                expenseList.appendChild(dateGroup);
+            });
+        }
+
+        // Show delete expense modal
+        function showDeleteExpenseModal(expenseId) {
+            expenseToDelete = expenseId;
+            deleteExpenseModal.style.display = 'flex';
+        }
+
+        // Close delete expense modal
+        function closeDeleteExpenseModalHandler() {
+            deleteExpenseModal.style.display = 'none';
+            expenseToDelete = null;
+        }
+
+        // Confirm delete expense
+        function confirmDeleteExpense() {
+            if (!expenseToDelete) return;
+            
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            const expense = group.expenses.find(e => e.id === expenseToDelete);
+            if (!expense) return;
+            
+            group.expenses = group.expenses.filter(e => e.id !== expenseToDelete);
+            saveData();
+            
+            showToast(translations[currentLanguage].expense_deleted.replace('{description}', expense.description), 'success');
+            
+            closeDeleteExpenseModalHandler();
+            renderExpenses();
+            renderBalances();
+        }
+
+        // Add participant
+        function addParticipant() {
+            const name = newParticipantNameInput.value.trim();
+            if (!name) {
+                showToast(translations[currentLanguage].fill_all_fields, 'error');
+                return;
+            }
+            
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            const newParticipant = {
+                id: Date.now().toString(),
+                name: name
+            };
+            
+            group.participants.push(newParticipant);
+            saveData();
+            
+            newParticipantNameInput.value = '';
+            showToast(translations[currentLanguage].participant_added.replace('{name}', name), 'success');
+            
+            renderParticipants();
+        }
+
+        // Render participants
+        function renderParticipants() {
+            participantList.innerHTML = '';
+            
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            if (group.participants.length === 0) {
+                participantList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-user-friends"></i>
+                        <p>${translations[currentLanguage].no_participants_yet}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            group.participants.forEach(participant => {
+                const li = document.createElement('li');
+                li.className = 'participant-item';
+                li.innerHTML = `
+                    <span>${participant.name}</span>
+                    <button class="btn btn-sm btn-danger remove-participant" data-id="${participant.id}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                const removeBtn = li.querySelector('.remove-participant');
+                removeBtn.addEventListener('click', () => removeParticipant(participant.id));
+                
+                participantList.appendChild(li);
+            });
+        }
+
+        // Remove participant
+        function removeParticipant(participantId) {
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            // Check if participant is involved in any expenses
+            const isInvolved = group.expenses.some(expense => {
+                return expense.payerId === participantId || participantId in expense.shares;
+            });
+            
+            if (isInvolved) {
+                showToast(translations[currentLanguage].participant_has_expenses, 'error');
+                return;
+            }
+            
+            const participant = group.participants.find(p => p.id === participantId);
+            if (!participant) return;
+            
+            group.participants = group.participants.filter(p => p.id !== participantId);
+            saveData();
+            
+            showToast(translations[currentLanguage].participant_removed.replace('{name}', participant.name), 'success');
+            
+            renderParticipants();
+        }
+
+        // Calculate balances
+        function calculateBalances() {
+            const group = findCurrentGroup();
+            if (!group) return [];
+            
+            // Initialize balances for all participants
+            let balances = {};
+            group.participants.forEach(participant => {
+                balances[participant.id] = 0;
+            });
+            
+            // Initialize balances for all guests across all expenses
+            const allGuests = new Map(); // Use a Map to deduplicate guests by ID
+            
+            group.expenses.forEach(expense => {
+                if (expense.guests && expense.guests.length > 0) {
+                    expense.guests.forEach(guest => {
+                        allGuests.set(guest.id, guest);
+                        if (!(guest.id in balances)) {
+                            balances[guest.id] = 0;
+                        }
+                    });
+                }
+            });
+            
+            // Calculate net balance for each participant and guest
+            group.expenses.forEach(expense => {
+                // Add the full amount to the payer
+                balances[expense.payerId] += expense.amount;
+                
+                // Subtract each participant's share
+                Object.entries(expense.shares).forEach(([participantId, share]) => {
+                    balances[participantId] -= share;
+                });
+            });
+            
+            return { balances, allGuests };
+        }
+
+        // Find the maximum absolute balance for bar scaling
+        function findMaxBalance(balances) {
+            let maxBalance = 0;
+            
+            Object.values(balances).forEach(balance => {
+                const absBalance = Math.abs(balance);
+                if (absBalance > maxBalance) {
+                    maxBalance = absBalance;
+                }
+            });
+            
+            return maxBalance > 0 ? maxBalance : 1; // Avoid division by zero
+        }
+
+        // Render balances
+        function renderBalances() {
+            balancesList.innerHTML = '';
+            settlementsList.innerHTML = '';
+            
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            if (group.expenses.length === 0) {
+                balancesList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-balance-scale"></i>
+                        <p>${translations[currentLanguage].no_expenses_for_balances}</p>
+                    </div>
+                `;
+                settlementsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-exchange-alt"></i>
+                        <p>${translations[currentLanguage].no_settlements_needed}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const { balances, allGuests } = calculateBalances();
+            const maxBalance = findMaxBalance(balances);
+            const currencySymbol = currencySymbols[group.currency] || '$';
+            
+            // Display individual balances for regular participants
+            group.participants.forEach(participant => {
+                const balance = balances[participant.id] || 0;
+                const balanceItem = document.createElement('div');
+                balanceItem.className = 'balance-item';
+                
+                // Calculate bar width as percentage of max balance (max 45% in each direction)
+                const barWidthPercent = Math.min(Math.abs(balance) / maxBalance * 45, 45);
+                
+                balanceItem.innerHTML = `
+                    <div class="balance-header">
+                        <span>${participant.name}</span>
+                        <span class="balance-amount ${balance > 0 ? 'positive' : balance < 0 ? 'negative' : ''}">
+                            ${balance > 0 ? '+' : ''}${currencySymbol}${Math.abs(balance).toFixed(2)}
+                        </span>
+                    </div>
+                    <div class="balance-bar-container">
+                        <div class="balance-center-marker"></div>
+                        <div class="balance-bar ${balance > 0 ? 'positive' : 'negative'}" 
+                             style="width: ${barWidthPercent}%; ${balance > 0 ? 'left: 50%' : 'right: 50%'}"></div>
+                    </div>
+                `;
+                
+                balancesList.appendChild(balanceItem);
+            });
+            
+            // Display balances for guests
+            allGuests.forEach(guest => {
+                const balance = balances[guest.id] || 0;
+                
+                // Only show guests with non-zero balances
+                if (Math.abs(balance) > 0.01) {
+                    const balanceItem = document.createElement('div');
+                    balanceItem.className = 'balance-item';
+                    
+                    // Calculate bar width as percentage of max balance (max 45% in each direction)
+                    const barWidthPercent = Math.min(Math.abs(balance) / maxBalance * 45, 45);
+                    
+                    balanceItem.innerHTML = `
+                        <div class="balance-header">
+                            <span>${guest.name} <span class="guest-badge"><i class="fas fa-user-tag"></i> ${translations[currentLanguage].guest}</span></span>
+                            <span class="balance-amount ${balance > 0 ? 'positive' : balance < 0 ? 'negative' : ''}">
+                                ${balance > 0 ? '+' : ''}${currencySymbol}${Math.abs(balance).toFixed(2)}
+                            </span>
+                        </div>
+                        <div class="balance-bar-container">
+                            <div class="balance-center-marker"></div>
+                            <div class="balance-bar ${balance > 0 ? 'positive' : 'negative'}" 
+                                 style="width: ${barWidthPercent}%; ${balance > 0 ? 'left: 50%' : 'right: 50%'}"></div>
+                        </div>
+                    `;
+                    
+                    balancesList.appendChild(balanceItem);
+                }
+            });
+            
+            // Calculate and display settlements
+            const settlements = calculateSettlements(balances, group.participants, allGuests);
+            
+            if (settlements.length === 0) {
+                settlementsList.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-check-circle"></i>
+                        <p>${translations[currentLanguage].all_settled}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            settlements.forEach(settlement => {
+                // Find the names of the participants or guests
+                let fromName, toName;
+                let fromIsGuest = false, toIsGuest = false;
+                
+                // Check if "from" is a regular participant
+                const fromParticipant = group.participants.find(p => p.id === settlement.from);
+                if (fromParticipant) {
+                    fromName = fromParticipant.name;
+                } else {
+                    // Check if "from" is a guest
+                    const fromGuest = allGuests.get(settlement.from);
+                    if (fromGuest) {
+                        fromName = fromGuest.name;
+                        fromIsGuest = true;
+                    }
+                }
+                
+                // Check if "to" is a regular participant
+                const toParticipant = group.participants.find(p => p.id === settlement.to);
+                if (toParticipant) {
+                    toName = toParticipant.name;
+                } else {
+                    // Check if "to" is a guest
+                    const toGuest = allGuests.get(settlement.to);
+                    if (toGuest) {
+                        toName = toGuest.name;
+                        toIsGuest = true;
+                    }
+                }
+                
+                if (!fromName || !toName) return;
+                
+                const settlementItem = document.createElement('div');
+                settlementItem.className = 'settlement-item';
+                settlementItem.innerHTML = `
+                    <p>
+                        <strong>${fromName}</strong>
+                        ${fromIsGuest ? `<span class="guest-badge"><i class="fas fa-user-tag"></i> ${translations[currentLanguage].guest}</span>` : ''}
+                        <span class="i18n" data-i18n="pays">${translations[currentLanguage].pays}</span>
+                        <strong>${toName}</strong>
+                        ${toIsGuest ? `<span class="guest-badge"><i class="fas fa-user-tag"></i> ${translations[currentLanguage].guest}</span>` : ''}
+                        <span class="expense-amount">${currencySymbol}${settlement.amount.toFixed(2)}</span>
+                    </p>
+                `;
+                
+                settlementsList.appendChild(settlementItem);
+            });
+        }
+
+        // Calculate settlements (who pays whom)
+        function calculateSettlements(balances, participants, allGuests) {
+            const settlements = [];
+            
+            // Create arrays of debtors and creditors
+            let debtors = [];
+            let creditors = [];
+            
+            Object.entries(balances).forEach(([participantId, balance]) => {
+                if (balance < -0.01) {
+                    debtors.push({ id: participantId, amount: Math.abs(balance) });
+                } else if (balance > 0.01) {
+                    creditors.push({ id: participantId, amount: balance });
+                }
+            });
+            
+            // Sort by amount (descending)
+            debtors.sort((a, b) => b.amount - a.amount);
+            creditors.sort((a, b) => b.amount - a.amount);
+            
+            // Calculate settlements
+            while (debtors.length > 0 && creditors.length > 0) {
+                const debtor = debtors[0];
+                const creditor = creditors[0];
+                
+                const amount = Math.min(debtor.amount, creditor.amount);
+                
+                if (amount > 0.01) { // Only add settlements for non-trivial amounts
+                    settlements.push({
+                        from: debtor.id,
+                        to: creditor.id,
+                        amount: amount
+                    });
+                }
+                
+                // Update amounts
+                debtor.amount -= amount;
+                creditor.amount -= amount;
+                
+                // Remove participants with zero balance
+                if (debtor.amount < 0.01) debtors.shift();
+                if (creditor.amount < 0.01) creditors.shift();
+            }
+            
+            return settlements;
+        }
+
+        // Function to copy the share URL to clipboard MOD
+        function copyShareUrl() {
+            shareUrlInput.select();
+            shareUrlInput.setSelectionRange(0, 99999); // For mobile devices
+            
+            navigator.clipboard.writeText(shareUrlInput.value)
+                .then(() => {
+                    // Show success message
+                    copySuccessMessage.style.display = 'block';
+                    
+                    // Hide success message after 3 seconds
+                    setTimeout(() => {
+                        copySuccessMessage.style.display = 'none';
+                    }, 3000);
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                    
+                    // Fallback for older browsers
+                    document.execCommand('copy');
+                    
+                    // Show success message
+                    copySuccessMessage.style.display = 'block';
+                    
+                    // Hide success message after 3 seconds
+                    setTimeout(() => {
+                        copySuccessMessage.style.display = 'none';
+                    }, 3000);
+                });
+        }
+
+        // Show share QR modal with compression MOD
+        function showShareQrModal() {
+            const group = findCurrentGroup();
+            if (!group) return;
+            
+            // Create a copy of the group without unnecessary data
+            const groupToShare = {
+                id: group.id,
+                name: group.name,
+                currency: group.currency,
+                participants: group.participants,
+                expenses: group.expenses,
+                shared: true,
+                sharedAt: new Date().toISOString()
+            };
+            
+            // Convert group data to JSON, compress, and encode for URL
+            const groupJson = JSON.stringify(groupToShare);
+            const compressedData = LZString.compressToEncodedURIComponent(groupJson);
+            
+            // Create URL with compressed data
+            const baseUrl = window.location.href.split('?')[0];
+            const shareUrl = `${baseUrl}?sharedGroup=${compressedData}`;
+
+            // Set the URL in the input field MOD
+            shareUrlInput.value = shareUrl;
+            
+            // Generate QR code
+            const qr = new QRious({
+                element: qrCanvas,
+                value: shareUrl,
+                size: 500, //MOD
+                level: 'M' // Medium error correction level for smaller QR //Small S is good too but H is too big seems a little blurred
+            });
+            // Reset copy success message
+            copySuccessMessage.style.display = 'none';
+            
+            shareQrModal.style.display = 'flex';
+        }
+
+        // Close share QR modal
+        function closeShareQrModalHandler() {
+            shareQrModal.style.display = 'none';
+        }
+
+        // Check for shared group in URL when app loads
+        function checkForSharedGroup() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const compressedData = urlParams.get('sharedGroup');
+            
+            if (compressedData) {
+                try {
+                    // Clear the URL parameter without refreshing the page
+                    const newUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, newUrl);
+                    
+                    // Decompress and parse the shared group data
+                    const decompressedJson = LZString.decompressFromEncodedURIComponent(compressedData);
+                    const sharedGroup = JSON.parse(decompressedJson);
+                    
+                    // Check if this group already exists
+                    const existingGroupIndex = groups.findIndex(g => g.id === sharedGroup.id);
+                    
+                    if (existingGroupIndex !== -1) {
+                        // Group already exists, rename it
+                        sharedGroup.name = `${sharedGroup.name} (Shared)`;
+                        sharedGroup.id = Date.now().toString(); // Generate new ID
+                        
+                        groups.push(sharedGroup);
+                        saveData();
+                        
+                        showToast(
+                            translations[currentLanguage].group_already_exists.replace('{name}', sharedGroup.name),
+                            'warning'
+                        );
+                    } else {
+                        // Add the shared group
+                        groups.push(sharedGroup);
+                        saveData();
+                        
+                        showToast(
+                            translations[currentLanguage].group_imported.replace('{name}', sharedGroup.name),
+                            'success'
+                        );
+                    }
+                    
+                    renderGroups();
+                    
+                    // Navigate to the imported group
+                    showGroupDetail(sharedGroup.id);
+                    
+                } catch (error) {
+                    console.error('Error parsing shared group data:', error);
+                    showToast(translations[currentLanguage].invalid_qr_data, 'error');
+                }
+            }
+        }
+
+        // Initialize the app when the page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
