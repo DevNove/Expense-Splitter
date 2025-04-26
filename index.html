@@ -43,7 +43,7 @@
             padding-bottom: 70px;
         }
 
-        header {
+        header { /*MOD*/
             background-color: var(--primary-color);
             color: white;
             padding: 1.25rem;
@@ -59,7 +59,7 @@
 
         .header-title {
             flex: 1;
-            font-size: 1.5rem; /*MOD*/
+            font-size: 1.5rem;
             text-align: center;
         }
 
@@ -1238,6 +1238,26 @@
                 width: 100%;
             }
         }
+        
+        /* Fix overlap MOD */
+        @media (max-width: 560px) {
+            header {
+                /* Change to column layout on small screens */
+                flex-direction: column;
+                padding-bottom: 0.75rem;
+            }
+            
+            .header-title {
+                margin-bottom: -0.5rem;
+            }
+            
+            .language-selector {
+                /* Reset positioning for small screens */
+                position: static;
+                margin-top: 0.25rem;
+            }
+        }
+
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </head>
@@ -3029,6 +3049,8 @@
             groupsScreen.style.display = 'block';
             groupDetailScreen.style.display = 'none';
             addExpenseFab.style.display = 'none';
+
+            renderGroups(); //MOD
         }
 
         // Delete current group
@@ -3246,6 +3268,7 @@
             
             renderExpenses();
             renderBalances();
+            renderGroups(); // Re-render group cards to update the count MOD
         }
 
         // Group expenses by date
@@ -3436,6 +3459,7 @@
             closeDeleteExpenseModalHandler();
             renderExpenses();
             renderBalances();
+            renderGroups(); // Re-render group cards to update the count MOD
         }
 
         // Add participant
@@ -3461,6 +3485,7 @@
             showToast(translations[currentLanguage].participant_added.replace('{name}', name), 'success');
             
             renderParticipants();
+            renderGroups(); // Re-render group cards to update the count MOD
         }
 
         // Render participants
@@ -3521,6 +3546,7 @@
             showToast(translations[currentLanguage].participant_removed.replace('{name}', participant.name), 'success');
             
             renderParticipants();
+            renderGroups(); // Re-render group cards to update the count MOD
         }
 
         // Calculate balances
@@ -3846,56 +3872,91 @@
             shareQrModal.style.display = 'none';
         }
 
+        // Function to show group details MOD disabled right now
+        function showGroupDetail(groupId) {
+            currentGroupId = groupId;
+            const group = findCurrentGroup();
+            
+            if (!group) {
+                showToast(translations[currentLanguage].group_not_found || 'Group not found', 'error');
+                return;
+            }
+            
+            // Update the app title to show the group name
+            appTitle.textContent = group.name;
+            
+            // Show the group detail screen and hide the groups list
+            groupsScreen.style.display = 'none';
+            groupDetailScreen.style.display = 'block';
+            addExpenseFab.style.display = 'block';
+            
+            // Render the group details
+            renderParticipants();
+            renderExpenses();
+            renderBalances();
+        }
+
         // Check for shared group in URL when app loads
         function checkForSharedGroup() {
             const urlParams = new URLSearchParams(window.location.search);
             const compressedData = urlParams.get('sharedGroup');
             
-            if (compressedData) {
-                try {
-                    // Clear the URL parameter without refreshing the page
-                    const newUrl = window.location.pathname;
-                    window.history.replaceState({}, document.title, newUrl);
-                    
-                    // Decompress and parse the shared group data
-                    const decompressedJson = LZString.decompressFromEncodedURIComponent(compressedData);
-                    const sharedGroup = JSON.parse(decompressedJson);
-                    
-                    // Check if this group already exists
-                    const existingGroupIndex = groups.findIndex(g => g.id === sharedGroup.id);
-                    
-                    if (existingGroupIndex !== -1) {
-                        // Group already exists, rename it
-                        sharedGroup.name = `${sharedGroup.name} (Shared)`;
-                        sharedGroup.id = Date.now().toString(); // Generate new ID
-                        
-                        groups.push(sharedGroup);
-                        saveData();
-                        
-                        showToast(
-                            translations[currentLanguage].group_already_exists.replace('{name}', sharedGroup.name),
-                            'warning'
-                        );
-                    } else {
-                        // Add the shared group
-                        groups.push(sharedGroup);
-                        saveData();
-                        
-                        showToast(
-                            translations[currentLanguage].group_imported.replace('{name}', sharedGroup.name),
-                            'success'
-                        );
-                    }
-                    
-                    renderGroups();
-                    
-                    // Navigate to the imported group
-                    showGroupDetail(sharedGroup.id);
-                    
-                } catch (error) {
-                    console.error('Error parsing shared group data:', error);
-                    showToast(translations[currentLanguage].invalid_qr_data, 'error');
+            if (!compressedData) {
+                return; // No shared group data in URL
+            }
+            
+            // Clear the URL parameter without refreshing the page
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+            
+            try {
+                // Decompress and parse the shared group data
+                const decompressedJson = LZString.decompressFromEncodedURIComponent(compressedData);
+                if (!decompressedJson) {
+                    throw new Error('Failed to decompress data');
                 }
+                
+                const sharedGroup = JSON.parse(decompressedJson);
+                if (!sharedGroup || !sharedGroup.id || !sharedGroup.name) {
+                    throw new Error('Invalid group data structure');
+                }
+                
+                console.log('Successfully parsed shared group:', sharedGroup.name);
+                
+                // Check if this group already exists
+                const existingGroupIndex = groups.findIndex(g => g.id === sharedGroup.id);
+                
+                if (existingGroupIndex !== -1) {
+                    // Group already exists, rename it
+                    sharedGroup.name = `${sharedGroup.name} (Shared)`;
+                    sharedGroup.id = Date.now().toString(); // Generate new ID
+                    
+                    groups.push(sharedGroup);
+                    saveData();
+                    
+                    showToast(
+                        translations[currentLanguage].group_already_exists.replace('{name}', sharedGroup.name),
+                        'warning'
+                    );
+                } else {
+                    // Add the shared group
+                    groups.push(sharedGroup);
+                    saveData();
+                    
+                    showToast(
+                        translations[currentLanguage].group_imported.replace('{name}', sharedGroup.name),
+                        'success'
+                    );
+                }
+                
+                renderGroups();
+                
+                // Navigate to the imported group
+                // showGroupDetail(sharedGroup.id); // Could be MOD so redirect to the group
+                
+            } catch (error) {
+                console.error('Error parsing shared group data:', error);
+                showToast(translations[currentLanguage].invalid_qr_data, 'error');
             }
         }
 
