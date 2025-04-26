@@ -2108,6 +2108,7 @@
             setupExpenseTypeSelector();
             setupEditExpenseTypeSelector();
             checkForSharedGroup(); //MOD
+            adjustFontSize() //MOD
             
             // Set default date to today
             const today = new Date().toISOString().split('T')[0];
@@ -3993,11 +3994,11 @@
             const headerContainer = document.querySelector('.header-title');
             
             // Set font size parameters
-            const maxFontSize = 2.4; // Maximum font size in rem
+            const maxFontSize = 2; // Maximum font size in rem
             const minFontSize = 1.0; // Minimum font size in rem
             const baseCharacters = 17; // Font starts decreasing after this many characters
             const maxHeaderHeight = 60; // Maximum height we want for the header in pixels
-            const lineHeight = 1.5; // Consistent line height
+            const lineHeight = 1.6; // Consistent line height
             
             // Initial font size calculation based on title length
             let fontSize;
@@ -4039,7 +4040,7 @@
             headerTitle.style.webkitLineClamp = '2'; // Limit to max 2 lines
             headerTitle.style.webkitBoxOrient = 'vertical';
             
-            console.log(`Title length: ${titleLength}, Font size: ${fontSize.toFixed(2)}rem, Height: ${currentHeight}px`);
+            //console.log(`Title length: ${titleLength}, Font size: ${fontSize.toFixed(2)}rem, Height: ${currentHeight}px`);
         }
 
         // Initialize the app when the page loads
