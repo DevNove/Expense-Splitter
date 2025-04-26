@@ -3073,8 +3073,9 @@
             groupsScreen.style.display = 'block';
             groupDetailScreen.style.display = 'none';
             addExpenseFab.style.display = 'none';
-
+            
             renderGroups(); //MOD
+            adjustFontSize() //BBMOD
         }
 
         // Delete current group
@@ -4040,7 +4041,7 @@
             headerTitle.style.webkitLineClamp = '2'; // Limit to max 2 lines
             headerTitle.style.webkitBoxOrient = 'vertical';
             
-            //console.log(`Title length: ${titleLength}, Font size: ${fontSize.toFixed(2)}rem, Height: ${currentHeight}px`);
+            console.log(`Title length: ${titleLength}, Font size: ${fontSize.toFixed(2)}rem, Height: ${currentHeight}px`);
         }
 
         // Initialize the app when the page loads
