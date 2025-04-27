@@ -1,5 +1,6 @@
 <img src="./assets/logo.svg" width="300px">
-
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![GitHub last commit](https://img.shields.io/github/last-commit/DevNove/Expense-Splitter)
 > *A simple way to track and split expenses with friends.*
 
 **Expense Splitter** is a lightweight web application designed to help groups of people track shared expenses and calculate how to settle up.
