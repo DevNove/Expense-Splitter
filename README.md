@@ -7,9 +7,9 @@
 ## How to use
 
 Just create a group, add the participants and start recording expenses as they happen. For each expense:
--Select who paid.
--Choose who participated. (including guests that may not be part of your *regular* group)
--The app **automatically calculates** who owes what to whom.
+- Select who paid.
+- Choose who participated. (including guests that may not be part of your *regular* group)
+- The app **automatically calculates** who owes what to whom.
 
 When it's time to settle up, check the **Balances** tab to see the simplest way for everyone to pay each other back.
 
