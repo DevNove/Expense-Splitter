@@ -2,6 +2,8 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![GitHub last commit](https://img.shields.io/github/last-commit/DevNove/Expense-Splitter)
+![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Made with](https://img.shields.io/badge/Made%20with-Vanilla%20JS-yellow)
 
 > *A simple way to track and split expenses with friends.*
 
